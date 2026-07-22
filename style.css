@@ -111,7 +111,7 @@ p {
   top: 0;
   z-index: 10;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   margin-bottom: 16px;
   padding: 7px;
@@ -122,12 +122,12 @@ p {
 
 .tab-button {
   min-height: 44px;
-  padding: 8px 4px;
+  padding: 8px 3px;
   border: 0;
   border-radius: 10px;
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -265,6 +265,13 @@ select {
   border: 1px solid #bdc7bd;
 }
 
+input[type="file"] {
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  min-height: auto;
+}
+
 button {
   padding: 12px;
   border: 0;
@@ -296,8 +303,8 @@ button {
 .small-button {
   width: auto;
   min-height: 38px;
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: 8px 10px;
+  font-size: 13px;
 }
 
 .bill-check {
@@ -318,20 +325,36 @@ button {
   text-decoration: line-through;
 }
 
-.debt-actions {
+.debt-actions,
+.category-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: 10px;
 }
 
-.debt-actions button {
+.bill-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.debt-actions button,
+.category-actions button,
+.bill-actions button {
   min-height: 40px;
-  font-size: 14px;
+  font-size: 13px;
+  padding: 8px 6px;
+}
+
+.restore-debt-button {
+  background: #edf2ed;
+  color: var(--text);
 }
 
 .paid-off {
-  opacity: 0.65;
+  opacity: 0.75;
 }
 
 .message {
@@ -355,6 +378,10 @@ button {
   gap: 12px;
 }
 
+.month-snapshot-row {
+  display: block;
+}
+
 .history-details {
   min-width: 0;
 }
@@ -365,6 +392,11 @@ button {
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.month-snapshot-row .history-note {
+  overflow: visible;
+  white-space: normal;
 }
 
 .history-amount {
@@ -396,5 +428,23 @@ button {
   .section-heading strong {
     display: block;
     margin-top: 8px;
+  }
+
+  .tab-button {
+    font-size: 10.5px;
+    padding: 8px 2px;
+  }
+
+  .debt-actions,
+  .category-actions,
+  .bill-actions {
+    gap: 6px;
+  }
+
+  .debt-actions button,
+  .category-actions button,
+  .bill-actions button {
+    font-size: 12px;
+    padding: 8px 4px;
   }
 }
