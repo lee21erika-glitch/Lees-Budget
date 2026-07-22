@@ -333,14 +333,6 @@ button {
   margin-top: 10px;
 }
 
-.debt-actions.two-col {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.debt-actions + .debt-actions {
-  margin-top: 8px;
-}
-
 .bill-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -359,10 +351,6 @@ button {
 .restore-debt-button {
   background: #edf2ed;
   color: var(--text);
-}
-
-.income-edit-button {
-  margin-top: 8px;
 }
 
 .paid-off {
