@@ -3,52 +3,21 @@
 const STORAGE_KEY = "leesBudgetAppData";
 
 const startingData = {
-  monthlyIncome: 5200,
+  monthlyIncome: 0,
 
   categories: [
-    { name: "Groceries", budget: 600, moneyAddedThisMonth: 0 },
-    { name: "Fuel", budget: 425, moneyAddedThisMonth: 0 },
-    { name: "Dining Out", budget: 175, moneyAddedThisMonth: 0 },
-    { name: "Household", budget: 150, moneyAddedThisMonth: 0 },
-    { name: "Kids", budget: 150, moneyAddedThisMonth: 0 },
-    { name: "Pets", budget: 100, moneyAddedThisMonth: 0 },
-    { name: "Shopping", budget: 100, moneyAddedThisMonth: 0 },
-    { name: "Entertainment", budget: 60, moneyAddedThisMonth: 0 },
-    { name: "Miscellaneous", budget: 100, moneyAddedThisMonth: 0 },
-    { name: "Savings", budget: 695, moneyAddedThisMonth: 0 }
+    { name: "Groceries", budget: 0, moneyAddedThisMonth: 0 },
+    { name: "Transportation", budget: 0, moneyAddedThisMonth: 0 },
+    { name: "Dining Out", budget: 0, moneyAddedThisMonth: 0 },
+    { name: "Household", budget: 0, moneyAddedThisMonth: 0 },
+    { name: "Entertainment", budget: 0, moneyAddedThisMonth: 0 },
+    { name: "Miscellaneous", budget: 0, moneyAddedThisMonth: 0 },
+    { name: "Savings", budget: 0, moneyAddedThisMonth: 0 }
   ],
 
-  bills: [
-    { id: "rent", name: "Rent", amount: 560, paid: false, removed: false },
-    { id: "car", name: "Car Payment", amount: 560, paid: false, removed: false },
-    { id: "klarna", name: "Klarna", amount: 308, paid: false, removed: false },
-    { id: "tmobile", name: "T-Mobile", amount: 272, paid: false, removed: false },
-    { id: "statefarm", name: "State Farm Insurance", amount: 171, paid: false, removed: false },
-    { id: "signature", name: "Signature Loan", amount: 170, paid: false, removed: false },
-    { id: "gasheat", name: "Gas / Heat", amount: 165, paid: false, removed: false },
-    { id: "kamari", name: "Kamari Health Insurance", amount: 100, paid: false, removed: false },
-    { id: "electric", name: "Electric", amount: 70, paid: false, removed: false },
-    { id: "affirm", name: "Affirm", amount: 68, paid: false, removed: false },
-    { id: "merrick", name: "Merrick", amount: 50, paid: false, removed: false },
-    { id: "afterpay", name: "Afterpay", amount: 49, paid: false, removed: false },
-    { id: "biglots", name: "Big Lots", amount: 37, paid: false, removed: false },
-    { id: "capitalone", name: "Capital One", amount: 25, paid: false, removed: false },
-    { id: "mastercard", name: "Mastercard", amount: 20, paid: false, removed: false },
-    { id: "carecredit", name: "CareCredit", amount: 20, paid: false, removed: false }
-  ],
+  bills: [],
 
-  debts: [
-    { id: "car", name: "Car Payment", balance: 0, minimumPayment: 560, paidOff: false },
-    { id: "klarna", name: "Klarna", balance: 0, minimumPayment: 308, paidOff: false },
-    { id: "signature", name: "Signature Loan", balance: 0, minimumPayment: 170, paidOff: false },
-    { id: "affirm", name: "Affirm", balance: 0, minimumPayment: 68, paidOff: false },
-    { id: "merrick", name: "Merrick", balance: 0, minimumPayment: 50, paidOff: false },
-    { id: "afterpay", name: "Afterpay", balance: 0, minimumPayment: 49, paidOff: false },
-    { id: "biglots", name: "Big Lots", balance: 0, minimumPayment: 37, paidOff: false },
-    { id: "capitalone", name: "Capital One", balance: 0, minimumPayment: 25, paidOff: false },
-    { id: "mastercard", name: "Mastercard", balance: 0, minimumPayment: 20, paidOff: false },
-    { id: "carecredit", name: "CareCredit", balance: 0, minimumPayment: 20, paidOff: false }
-  ],
+  debts: [],
 
   archivedDebts: [],
 
@@ -181,6 +150,29 @@ function displayCurrentMonth() {
     month: "long",
     year: "numeric"
   });
+}
+
+function editIncome() {
+  const newIncomeInput = window.prompt(
+    "Monthly income:",
+    String(appData.monthlyIncome)
+  );
+
+  if (newIncomeInput === null) {
+    return;
+  }
+
+  const newIncome = Number(newIncomeInput);
+
+  if (!Number.isFinite(newIncome) || newIncome < 0) {
+    window.alert("Enter a valid income amount.");
+    return;
+  }
+
+  appData.monthlyIncome = Number(newIncome.toFixed(2));
+
+  saveAppData();
+  refreshApp();
 }
 
 function updateDashboard() {
@@ -875,6 +867,39 @@ function applyDebtPayment(debtId) {
   refreshApp();
 }
 
+function markDebtPaidOff(debtId) {
+  const debt = appData.debts.find((item) => item.id === debtId);
+
+  if (!debt) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Mark ${debt.name} as paid off? This moves it to your Paid-Off Debt History.`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const matchingBill = appData.bills.find((bill) => bill.id === debtId);
+
+  debt.balance = 0;
+  debt.paidOff = true;
+  debt.payoffDate = new Date().toISOString();
+
+  if (matchingBill) {
+    matchingBill.removed = true;
+    matchingBill.paid = false;
+  }
+
+  appData.debts = appData.debts.filter((item) => item.id !== debtId);
+  appData.archivedDebts.push(debt);
+
+  saveAppData();
+  refreshApp();
+}
+
 function restoreDebt(debtId) {
   const debt = appData.archivedDebts.find((item) => item.id === debtId);
 
@@ -1095,9 +1120,12 @@ function renderDebts() {
           </label>
         </div>
 
-        <div class="debt-actions">
+        <div class="debt-actions two-col">
           <button type="button" class="small-button secondary-button edit-debt-button" data-debt-id="${debt.id}">Edit</button>
           <button type="button" class="small-button primary-button apply-payment-button" data-debt-id="${debt.id}">Apply Payment</button>
+        </div>
+        <div class="debt-actions two-col">
+          <button type="button" class="small-button secondary-button mark-paid-off-button" data-debt-id="${debt.id}">Mark Paid Off</button>
           <button type="button" class="small-button danger-button delete-debt-button" data-debt-id="${debt.id}">Delete</button>
         </div>
       `;
@@ -1161,6 +1189,12 @@ function renderDebts() {
   document.querySelectorAll(".apply-payment-button").forEach((button) => {
     button.addEventListener("click", () => {
       applyDebtPayment(button.dataset.debtId);
+    });
+  });
+
+  document.querySelectorAll(".mark-paid-off-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      markDebtPaidOff(button.dataset.debtId);
     });
   });
 
@@ -1616,6 +1650,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const addCategoryButton = document.getElementById("addCategoryButton");
   const exportBackupButton = document.getElementById("exportBackupButton");
   const importBackupInput = document.getElementById("importBackupInput");
+  const editIncomeButton = document.getElementById("editIncomeButton");
 
   if (addExpenseButton) {
     addExpenseButton.addEventListener("click", addExpense);
@@ -1659,6 +1694,10 @@ document.addEventListener("DOMContentLoaded", () => {
       handleImportFile(file);
       importBackupInput.value = "";
     });
+  }
+
+  if (editIncomeButton) {
+    editIncomeButton.addEventListener("click", editIncome);
   }
 
   refreshApp();
