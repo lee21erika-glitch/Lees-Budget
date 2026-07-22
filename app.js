@@ -506,7 +506,7 @@ function resetBillsForNewMonth() {
   refreshApp();
 }
 
-function markDebtPaidOff(debtId) {
+function applyDebtPayment(debtId) {
   const debt = appData.debts.find((item) => item.id === debtId);
 
   if (!debt) {
@@ -514,20 +514,30 @@ function markDebtPaidOff(debtId) {
   }
 
   const confirmed = window.confirm(
-    `Mark ${debt.name} as paid off? This will remove it from your monthly bills.`
+    `Apply your ${formatMoney(debt.minimumPayment)} payment to ${debt.name}?`
   );
 
   if (!confirmed) {
     return;
   }
 
-  debt.paidOff = true;
-
   const matchingBill = appData.bills.find((bill) => bill.id === debtId);
+  const newBalance = Number(debt.balance) - Number(debt.minimumPayment);
 
-  if (matchingBill) {
-    matchingBill.removed = true;
-    matchingBill.paid = false;
+  if (newBalance <= 0) {
+    debt.balance = 0;
+    debt.paidOff = true;
+
+    if (matchingBill) {
+      matchingBill.removed = true;
+      matchingBill.paid = false;
+    }
+  } else {
+    debt.balance = newBalance;
+
+    if (matchingBill) {
+      matchingBill.paid = true;
+    }
   }
 
   saveAppData();
@@ -547,10 +557,89 @@ function restoreDebt(debtId) {
 
   if (matchingBill) {
     matchingBill.removed = false;
+    matchingBill.amount = debt.minimumPayment;
   }
 
   saveAppData();
   refreshApp();
+}
+
+function showDebtMessage(message, isError = false) {
+  const messageElement = document.getElementById("debtMessage");
+
+  if (!messageElement) {
+    return;
+  }
+
+  messageElement.textContent = message;
+  messageElement.style.color = isError ? "#c62828" : "#2e7d32";
+
+  window.setTimeout(() => {
+    messageElement.textContent = "";
+  }, 2500);
+}
+
+function addDebt() {
+  const nameInput = document.getElementById("debtName");
+  const balanceInput = document.getElementById("debtBalance");
+  const minimumPaymentInput = document.getElementById("debtMinimumPayment");
+
+  if (!nameInput || !balanceInput || !minimumPaymentInput) {
+    return;
+  }
+
+  const name = nameInput.value.trim();
+  const balance = Number(balanceInput.value);
+  const minimumPayment = Number(minimumPaymentInput.value);
+
+  if (!name) {
+    showDebtMessage("Enter a debt name.", true);
+    nameInput.focus();
+    return;
+  }
+
+  if (!Number.isFinite(balance) || balance < 0) {
+    showDebtMessage("Enter a valid starting balance.", true);
+    balanceInput.focus();
+    return;
+  }
+
+  if (!Number.isFinite(minimumPayment) || minimumPayment < 0) {
+    showDebtMessage("Enter a valid minimum payment.", true);
+    minimumPaymentInput.focus();
+    return;
+  }
+
+  const debtId = `debt-${Date.now()}`;
+
+  const newDebt = {
+    id: debtId,
+    name,
+    balance: Number(balance.toFixed(2)),
+    minimumPayment: Number(minimumPayment.toFixed(2)),
+    paidOff: false
+  };
+
+  const newBill = {
+    id: debtId,
+    name,
+    amount: newDebt.minimumPayment,
+    paid: false,
+    removed: false
+  };
+
+  appData.debts.push(newDebt);
+  appData.bills.push(newBill);
+
+  saveAppData();
+  refreshApp();
+
+  nameInput.value = "";
+  balanceInput.value = "";
+  minimumPaymentInput.value = "";
+
+  showDebtMessage("Debt added.");
+  nameInput.focus();
 }
 
 function updateDebtBalance(debtId, newBalance) {
@@ -582,14 +671,14 @@ function updateDebtMinimumPayment(debtId, newMinimumPayment) {
     ? parsedPayment
     : 0;
 
-  saveAppData();
-
   const matchingBill = appData.bills.find((bill) => bill.id === debtId);
 
   if (matchingBill && !matchingBill.removed) {
     matchingBill.amount = debt.minimumPayment;
-    refreshApp();
   }
+
+  saveAppData();
+  refreshApp();
 }
 
 function renderDebts() {
@@ -647,7 +736,7 @@ function renderDebts() {
         ${
           debt.paidOff
             ? `<button type="button" class="small-button restore-debt-button" data-debt-id="${debt.id}">Restore Debt</button>`
-            : `<button type="button" class="small-button danger-button paid-off-debt-button" data-debt-id="${debt.id}">Mark Paid Off</button>`
+            : `<button type="button" class="small-button primary-button apply-payment-button" data-debt-id="${debt.id}">Apply Payment</button>`
         }
       </div>
     `;
@@ -667,9 +756,9 @@ function renderDebts() {
     });
   });
 
-  document.querySelectorAll(".paid-off-debt-button").forEach((button) => {
+  document.querySelectorAll(".apply-payment-button").forEach((button) => {
     button.addEventListener("click", () => {
-      markDebtPaidOff(button.dataset.debtId);
+      applyDebtPayment(button.dataset.debtId);
     });
   });
 
