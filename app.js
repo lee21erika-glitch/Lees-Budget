@@ -785,6 +785,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const amountInput = document.getElementById("expenseAmount");
   const clearHistoryButton = document.getElementById("clearHistoryButton");
   const resetBillsButton = document.getElementById("resetBillsButton");
+  const addDebtButton = document.getElementById("addDebtButton");
 
   if (addExpenseButton) {
     addExpenseButton.addEventListener("click", addExpense);
@@ -804,6 +805,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (resetBillsButton) {
     resetBillsButton.addEventListener("click", resetBillsForNewMonth);
+  }
+
+  if (addDebtButton) {
+    addDebtButton.addEventListener("click", addDebt);
   }
 
   refreshApp();
