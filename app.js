@@ -329,3 +329,212 @@ document.addEventListener("DOMContentLoaded", () => {
   refreshApp();
   saveAppData();
 });
+/* =========================================
+   PART 2
+   Expense entry and expense history
+========================================= */
+
+function escapeText(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function showExpenseMessage(message, isError = false) {
+  const messageElement = document.getElementById("expenseMessage");
+
+  if (!messageElement) {
+    return;
+  }
+
+  messageElement.textContent = message;
+  messageElement.style.color = isError ? "#c62828" : "#2e7d32";
+
+  window.setTimeout(() => {
+    messageElement.textContent = "";
+  }, 2500);
+}
+
+function addExpense() {
+  const amountInput = document.getElementById("expenseAmount");
+  const categoryInput = document.getElementById("expenseCategory");
+  const noteInput = document.getElementById("expenseNote");
+
+  const amount = Number(amountInput.value);
+  const category = categoryInput.value;
+  const note = noteInput.value.trim();
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showExpenseMessage("Enter a valid expense amount.", true);
+    amountInput.focus();
+    return;
+  }
+
+  const expense = {
+    id: Date.now().toString(),
+    amount: Number(amount.toFixed(2)),
+    category,
+    note,
+    date: new Date().toISOString()
+  };
+
+  appData.expenses.unshift(expense);
+
+  saveAppData();
+  refreshApp();
+
+  amountInput.value = "";
+  noteInput.value = "";
+
+  showExpenseMessage("Expense added.");
+  amountInput.focus();
+}
+
+function deleteExpense(expenseId) {
+  const expense = appData.expenses.find(
+    (item) => item.id === expenseId
+  );
+
+  if (!expense) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Delete this ${formatMoney(expense.amount)} ${expense.category} expense?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  appData.expenses = appData.expenses.filter(
+    (item) => item.id !== expenseId
+  );
+
+  saveAppData();
+  refreshApp();
+}
+
+function renderExpenseHistory() {
+  const historyContainer = document.getElementById("expenseHistory");
+
+  if (!historyContainer) {
+    return;
+  }
+
+  historyContainer.innerHTML = "";
+
+  if (appData.expenses.length === 0) {
+    historyContainer.innerHTML = `
+      <div class="empty-state">
+        No expenses have been added yet.
+      </div>
+    `;
+
+    return;
+  }
+
+  appData.expenses.forEach((expense) => {
+    const expenseDate = new Date(expense.date);
+
+    const formattedDate = expenseDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+
+    const historyRow = document.createElement("div");
+    historyRow.className = "history-row";
+
+    historyRow.innerHTML = `
+      <div class="history-details">
+        <div class="row-name">
+          ${escapeText(expense.category)}
+        </div>
+
+        <div class="history-note">
+          ${escapeText(expense.note || "No note")} · ${formattedDate}
+        </div>
+      </div>
+
+      <div>
+        <div class="history-amount">
+          ${formatMoney(expense.amount)}
+        </div>
+
+        <button
+          type="button"
+          class="small-button danger-button delete-expense-button"
+          data-expense-id="${expense.id}"
+        >
+          Delete
+        </button>
+      </div>
+    `;
+
+    historyContainer.appendChild(historyRow);
+  });
+
+  document
+    .querySelectorAll(".delete-expense-button")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        deleteExpense(button.dataset.expenseId);
+      });
+    });
+}
+
+function clearExpenseHistory() {
+  if (appData.expenses.length === 0) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Delete every expense in your history?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  appData.expenses = [];
+
+  saveAppData();
+  refreshApp();
+}
+
+function refreshApp() {
+  displayCurrentMonth();
+  updateDashboard();
+  renderCategories();
+  renderExpenseHistory();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const addExpenseButton =
+    document.getElementById("addExpenseButton");
+
+  const amountInput =
+    document.getElementById("expenseAmount");
+
+  const clearHistoryButton =
+    document.getElementById("clearHistoryButton");
+
+  addExpenseButton.addEventListener("click", addExpense);
+
+  amountInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      addExpense();
+    }
+  });
+
+  clearHistoryButton.addEventListener(
+    "click",
+    clearExpenseHistory
+  );
+
+  refreshApp();
+});
