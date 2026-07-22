@@ -1,122 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lee's Budget</title>
+  <meta charset="UTF-8">
 
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
 
-    <meta name="theme-color" content="#2E7D32">
+  <meta name="theme-color" content="#2e7d32">
+
+  <title>Lee's Budget</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<header>
+  <header class="app-header">
     <h1>💰 Lee's Budget</h1>
-</header>
+    <p id="currentMonth"></p>
+  </header>
 
-<div class="card">
-    <h2>Money Left This Month</h2>
-    <div id="moneyLeft">$2,555</div>
-</div>
+  <main>
 
-<div class="card">
-    <h2>Budget Categories</h2>
+    <section class="summary-grid">
 
-    <div class="category">
-        <span>Groceries</span>
-        <span id="groceries">$600</span>
-    </div>
+      <div class="summary-card">
+        <span>Monthly Income</span>
+        <strong id="monthlyIncome">$5,200.00</strong>
+      </div>
 
-    <div class="category">
-        <span>Fuel</span>
-        <span id="fuel">$425</span>
-    </div>
+      <div class="summary-card">
+        <span>Bills & Debt</span>
+        <strong id="monthlyBills">$2,645.00</strong>
+      </div>
 
-    <div class="category">
-        <span>Dining</span>
-        <span id="dining">$175</span>
-    </div>
+      <div class="summary-card main-balance">
+        <span>Money Left This Month</span>
+        <strong id="moneyLeft">$2,555.00</strong>
+      </div>
 
-    <div class="category">
-        <span>Household</span>
-        <span>$150</span>
-    </div>
+      <div class="summary-card">
+        <span>Spent So Far</span>
+        <strong id="spentSoFar">$0.00</strong>
+      </div>
 
-    <div class="category">
-        <span>Kids</span>
-        <span>$150</span>
-    </div>
+    </section>
 
-    <div class="category">
-        <span>Pets</span>
-        <span>$100</span>
-    </div>
 
-    <div class="category">
-        <span>Shopping</span>
-        <span>$100</span>
-    </div>
+    <nav class="tabs" aria-label="Budget sections">
 
-    <div class="category">
-        <span>Entertainment</span>
-        <span>$60</span>
-    </div>
+      <button
+        type="button"
+        class="tab-button active"
+        data-tab="budget"
+      >
+        Budget
+      </button>
 
-    <div class="category">
-        <span>Misc.</span>
-        <span>$100</span>
-    </div>
+      <button
+        type="button"
+        class="tab-button"
+        data-tab="bills"
+      >
+        Bills
+      </button>
 
-    <div class="category">
-        <span>Savings</span>
-        <span>$695</span>
-    </div>
+      <button
+        type="button"
+        class="tab-button"
+        data-tab="debts"
+      >
+        Debts
+      </button>
 
-</div>
+      <button
+        type="button"
+        class="tab-button"
+        data-tab="history"
+      >
+        History
+      </button>
 
-<div class="card">
+    </nav>
 
-<h2>Bills</h2>
 
-<label><input type="checkbox"> Rent</label><br>
-<label><input type="checkbox"> Car Payment</label><br>
-<label><input type="checkbox"> Klarna</label><br>
-<label><input type="checkbox"> T-Mobile</label><br>
-<label><input type="checkbox"> Insurance</label><br>
-<label><input type="checkbox"> Signature Loan</label><br>
+    <section id="budgetTab" class="tab-panel active">
 
-</div>
+      <div class="card">
 
-<div class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Spending Budget</h2>
+            <p>Amounts update when you add expenses.</p>
+          </div>
+        </div>
 
-<h2>Add Expense</h2>
+        <div id="categoryList" class="category-list"></div>
 
-<input id="amount" type="number" placeholder="Amount">
+      </div>
 
-<select id="category">
 
-<option>Groceries</option>
-<option>Fuel</option>
-<option>Dining</option>
-<option>Household</option>
-<option>Kids</option>
-<option>Pets</option>
-<option>Shopping</option>
-<option>Entertainment</option>
-<option>Miscellaneous</option>
+      <div class="card">
 
-</select>
+        <h2>Add Expense</h2>
 
-<button onclick="addExpense()">
-Add Expense
-</button>
+        <label for="expenseAmount">Amount</label>
+        <input
+          id="expenseAmount"
+          type="number"
+          min="0"
+          step="0.01"
+          inputmode="decimal"
+          placeholder="0.00"
+        >
 
-</div>
+        <label for="expenseCategory">Category</label>
+        <select id="expenseCategory">
+          <option value="Groceries">Groceries</option>
+          <option value="Fuel">Fuel</option>
+          <option value="Dining Out">Dining Out</option>
+          <option value="Household">Household</option>
+          <option value="Kids">Kids</option>
+          <option value="Pets">Pets</option>
+          <option value="Shopping">Shopping</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Miscellaneous">Miscellaneous</option>
+        </select>
 
-<script src="app.js"></script>
+        <label for="expenseNote">Note</label>
+        <input
+          id="expenseNote"
+          type="text"
+          placeholder="Optional description"
+        >
+
+        <button
+          id="addExpenseButton"
+          type="button"
+          class="primary-button"
+        >
+          Add Expense
+        </button>
+
+        <p
+          id="expenseMessage"
+          class="message"
+          aria-live="polite"
+        ></p>
+
+      </div>
+
+    </section>
+
+
+    <section id="billsTab" class="tab-panel">
+
+      <div class="card">
+
+        <div class="section-heading">
+          <div>
+            <h2>Monthly Bills</h2>
+            <p>Check each bill when it is paid.</p>
+          </div>
+
+          <strong id="billsPaidCount">0 of 16 paid</strong>
+        </div>
+
+        <div id="billList" class="bill-list"></div>
+
+        <button
+          id="resetBillsButton"
+          type="button"
+          class="secondary-button"
+        >
+          Reset Bills for New Month
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <section id="debtsTab" class="tab-panel">
+
+      <div class="card">
+
+        <div class="section-heading">
+          <div>
+            <h2>Debt Tracker</h2>
+            <p>Update balances or mark debts paid off.</p>
+          </div>
+        </div>
+
+        <div id="debtList" class="debt-list"></div>
+
+      </div>
+
+    </section>
+
+
+    <section id="historyTab" class="tab-panel">
+
+      <div class="card">
+
+        <div class="section-heading">
+          <div>
+            <h2>Expense History</h2>
+            <p>Your most recent entries appear first.</p>
+          </div>
+        </div>
+
+        <div id="expenseHistory" class="history-list"></div>
+
+        <button
+          id="clearHistoryButton"
+          type="button"
+          class="danger-button"
+        >
+          Clear Expense History
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script src="app.js"></script>
 
 </body>
 </html>
