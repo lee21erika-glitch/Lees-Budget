@@ -3,21 +3,52 @@
 const STORAGE_KEY = "leesBudgetAppData";
 
 const startingData = {
-  monthlyIncome: 0,
+  monthlyIncome: 5200,
 
   categories: [
-    { name: "Groceries", budget: 0, moneyAddedThisMonth: 0 },
-    { name: "Transportation", budget: 0, moneyAddedThisMonth: 0 },
-    { name: "Dining Out", budget: 0, moneyAddedThisMonth: 0 },
-    { name: "Household", budget: 0, moneyAddedThisMonth: 0 },
-    { name: "Entertainment", budget: 0, moneyAddedThisMonth: 0 },
-    { name: "Miscellaneous", budget: 0, moneyAddedThisMonth: 0 },
-    { name: "Savings", budget: 0, moneyAddedThisMonth: 0 }
+    { name: "Groceries", budget: 600, moneyAddedThisMonth: 0 },
+    { name: "Fuel", budget: 425, moneyAddedThisMonth: 0 },
+    { name: "Dining Out", budget: 175, moneyAddedThisMonth: 0 },
+    { name: "Household", budget: 150, moneyAddedThisMonth: 0 },
+    { name: "Kids", budget: 150, moneyAddedThisMonth: 0 },
+    { name: "Pets", budget: 100, moneyAddedThisMonth: 0 },
+    { name: "Shopping", budget: 100, moneyAddedThisMonth: 0 },
+    { name: "Entertainment", budget: 60, moneyAddedThisMonth: 0 },
+    { name: "Miscellaneous", budget: 100, moneyAddedThisMonth: 0 },
+    { name: "Savings", budget: 695, moneyAddedThisMonth: 0 }
   ],
 
-  bills: [],
+  bills: [
+    { id: "rent", name: "Rent", amount: 560, paid: false, removed: false },
+    { id: "car", name: "Car Payment", amount: 560, paid: false, removed: false },
+    { id: "klarna", name: "Klarna", amount: 308, paid: false, removed: false },
+    { id: "tmobile", name: "T-Mobile", amount: 272, paid: false, removed: false },
+    { id: "statefarm", name: "State Farm Insurance", amount: 171, paid: false, removed: false },
+    { id: "signature", name: "Signature Loan", amount: 170, paid: false, removed: false },
+    { id: "gasheat", name: "Gas / Heat", amount: 165, paid: false, removed: false },
+    { id: "kamari", name: "Kamari Health Insurance", amount: 100, paid: false, removed: false },
+    { id: "electric", name: "Electric", amount: 70, paid: false, removed: false },
+    { id: "affirm", name: "Affirm", amount: 68, paid: false, removed: false },
+    { id: "merrick", name: "Merrick", amount: 50, paid: false, removed: false },
+    { id: "afterpay", name: "Afterpay", amount: 49, paid: false, removed: false },
+    { id: "biglots", name: "Big Lots", amount: 37, paid: false, removed: false },
+    { id: "capitalone", name: "Capital One", amount: 25, paid: false, removed: false },
+    { id: "mastercard", name: "Mastercard", amount: 20, paid: false, removed: false },
+    { id: "carecredit", name: "CareCredit", amount: 20, paid: false, removed: false }
+  ],
 
-  debts: [],
+  debts: [
+    { id: "car", name: "Car Payment", balance: 0, minimumPayment: 560, paidOff: false },
+    { id: "klarna", name: "Klarna", balance: 0, minimumPayment: 308, paidOff: false },
+    { id: "signature", name: "Signature Loan", balance: 0, minimumPayment: 170, paidOff: false },
+    { id: "affirm", name: "Affirm", balance: 0, minimumPayment: 68, paidOff: false },
+    { id: "merrick", name: "Merrick", balance: 0, minimumPayment: 50, paidOff: false },
+    { id: "afterpay", name: "Afterpay", balance: 0, minimumPayment: 49, paidOff: false },
+    { id: "biglots", name: "Big Lots", balance: 0, minimumPayment: 37, paidOff: false },
+    { id: "capitalone", name: "Capital One", balance: 0, minimumPayment: 25, paidOff: false },
+    { id: "mastercard", name: "Mastercard", balance: 0, minimumPayment: 20, paidOff: false },
+    { id: "carecredit", name: "CareCredit", balance: 0, minimumPayment: 20, paidOff: false }
+  ],
 
   archivedDebts: [],
 
