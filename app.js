@@ -538,3 +538,109 @@ document.addEventListener("DOMContentLoaded", () => {
 
   refreshApp();
 });
+/* =========================================
+   PART 3
+   Bills list, checkboxes, and monthly reset
+========================================= */
+
+function renderBills() {
+  const billList = document.getElementById("billList");
+  const paidCount = document.getElementById("billsPaidCount");
+
+  if (!billList || !paidCount) {
+    return;
+  }
+
+  billList.innerHTML = "";
+
+  const activeBills = appData.bills.filter((bill) => !bill.removed);
+  const paidBills = activeBills.filter((bill) => bill.paid).length;
+
+  paidCount.textContent = `${paidBills} of ${activeBills.length} paid`;
+
+  activeBills.forEach((bill) => {
+    const billRow = document.createElement("div");
+    billRow.className = `bill-row ${bill.paid ? "bill-paid" : ""}`;
+
+    billRow.innerHTML = `
+      <div class="row-top">
+        <label class="bill-check">
+          <input
+            type="checkbox"
+            class="bill-checkbox"
+            data-bill-id="${bill.id}"
+            ${bill.paid ? "checked" : ""}
+          >
+
+          <span>
+            <span class="row-name">${escapeText(bill.name)}</span>
+            <span class="row-subtitle">
+              ${bill.paid ? "Paid" : "Not paid yet"}
+            </span>
+          </span>
+        </label>
+
+        <div class="amount">
+          ${formatMoney(bill.amount)}
+        </div>
+      </div>
+    `;
+
+    billList.appendChild(billRow);
+  });
+
+  document.querySelectorAll(".bill-checkbox").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const bill = appData.bills.find(
+        (item) => item.id === checkbox.dataset.billId
+      );
+
+      if (!bill) {
+        return;
+      }
+
+      bill.paid = checkbox.checked;
+
+      saveAppData();
+      renderBills();
+    });
+  });
+}
+
+function resetBillsForNewMonth() {
+  const confirmed = window.confirm(
+    "Uncheck every bill for a new month?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  appData.bills.forEach((bill) => {
+    bill.paid = false;
+  });
+
+  saveAppData();
+  renderBills();
+}
+
+const originalRefreshApp = refreshApp;
+
+refreshApp = function () {
+  originalRefreshApp();
+  renderBills();
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  const resetBillsButton =
+    document.getElementById("resetBillsButton");
+
+  if (resetBillsButton) {
+    resetBillsButton.addEventListener(
+      "click",
+      resetBillsForNewMonth
+    );
+  }
+
+  renderBills();
+});
