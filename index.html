@@ -28,23 +28,23 @@
     <section class="summary-grid">
 
       <div class="summary-card">
-        <span>Paycheck Income</span>
+        <span id="incomeLabel">Paycheck Income</span>
         <strong id="monthlyIncome">$5,200.00</strong>
         <button id="editIncomeButton" type="button" class="small-button secondary-button income-edit-button">Edit</button>
       </div>
 
       <div class="summary-card">
-        <span>Bills This Pay Period</span>
+        <span id="billsLabel">Bills This Pay Period</span>
         <strong id="monthlyBills">$2,645.00</strong>
       </div>
 
       <div class="summary-card main-balance">
-        <span>Money Left Until Payday</span>
+        <span id="moneyLeftLabel">Money Left Until Payday</span>
         <strong id="moneyLeft">$2,555.00</strong>
       </div>
 
       <div class="summary-card">
-        <span>Spent This Pay Period</span>
+        <span id="spentLabel">Spent This Pay Period</span>
         <strong id="spentSoFar">$0.00</strong>
       </div>
 
@@ -229,6 +229,12 @@
           <option value="14">Biweekly (every 14 days)</option>
         </select>
 
+        <label for="budgetModeSelect">Budgeting Mode</label>
+        <select id="budgetModeSelect">
+          <option value="biweekly">Biweekly (by paycheck)</option>
+          <option value="monthly">Monthly (by calendar month)</option>
+        </select>
+
         <button id="saveSettingsButton" type="button" class="primary-button">Save Settings</button>
 
         <p id="settingsMessage" class="message" aria-live="polite"></p>
@@ -293,7 +299,7 @@
   </main>
 
 
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
 
 </body>
 </html>
