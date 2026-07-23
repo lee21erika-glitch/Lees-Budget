@@ -62,7 +62,8 @@ const startingData = {
     appName: "Lee's Budget",
     appEmoji: "💰",
     payday: new Date().toISOString().slice(0, 10),
-    payFrequencyDays: 14
+    payFrequencyDays: 14,
+    budgetMode: "biweekly"
   }
 };
 
@@ -107,7 +108,11 @@ function normalizeSettings(settings) {
     appName: (settings && settings.appName) || defaults.appName,
     appEmoji: (settings && settings.appEmoji) || defaults.appEmoji,
     payday: (settings && settings.payday) || defaults.payday,
-    payFrequencyDays: (settings && Number(settings.payFrequencyDays)) || 14
+    payFrequencyDays: (settings && Number(settings.payFrequencyDays)) || 14,
+    budgetMode:
+      settings && (settings.budgetMode === "monthly" || settings.budgetMode === "biweekly")
+        ? settings.budgetMode
+        : defaults.budgetMode
   };
 }
 
@@ -233,7 +238,13 @@ function getBillsDueThisPayPeriod() {
   });
 }
 
-function getBillsTotalForPayPeriod() {
+function getBillsTotalForCurrentPeriod() {
+  if (appData.settings.budgetMode === "monthly") {
+    return appData.bills
+      .filter((bill) => !bill.removed)
+      .reduce((total, bill) => total + Number(bill.amount), 0);
+  }
+
   return getBillsDueThisPayPeriod().reduce(
     (total, bill) => total + Number(bill.amount),
     0
@@ -256,7 +267,7 @@ function getCategorySpent(categoryName) {
 function getMoneyLeft() {
   return (
     Number(appData.monthlyIncome) -
-    getBillsTotalForPayPeriod() -
+    getBillsTotalForCurrentPeriod() -
     getTotalExpenses()
   );
 }
@@ -276,10 +287,53 @@ function applySettings() {
   document.title = appData.settings.appName;
 }
 
+function updateDashboardLabels() {
+  const incomeLabel = document.getElementById("incomeLabel");
+  const billsLabel = document.getElementById("billsLabel");
+  const moneyLeftLabel = document.getElementById("moneyLeftLabel");
+  const spentLabel = document.getElementById("spentLabel");
+
+  const isMonthly = appData.settings.budgetMode === "monthly";
+
+  if (incomeLabel) {
+    incomeLabel.textContent = isMonthly ? "Monthly Income" : "Paycheck Income";
+  }
+
+  if (billsLabel) {
+    billsLabel.textContent = isMonthly ? "Monthly Bills" : "Bills This Pay Period";
+  }
+
+  if (moneyLeftLabel) {
+    moneyLeftLabel.textContent = isMonthly ? "Money Left This Month" : "Money Left Until Payday";
+  }
+
+  if (spentLabel) {
+    spentLabel.textContent = isMonthly ? "Spent So Far" : "Spent This Pay Period";
+  }
+}
+
+function updateResetButtonLabel() {
+  const resetBillsButton = document.getElementById("resetBillsButton");
+
+  if (!resetBillsButton) {
+    return;
+  }
+
+  resetBillsButton.textContent =
+    appData.settings.budgetMode === "monthly"
+      ? "Start New Month (Reset Bills & Expenses)"
+      : "Start New Pay Period (Reset Bills & Expenses)";
+}
+
 function updatePayPeriodInfo() {
   const nextPaydayElement = document.getElementById("nextPaydayText");
 
   if (!nextPaydayElement) {
+    return;
+  }
+
+  if (appData.settings.budgetMode === "monthly") {
+    nextPaydayElement.textContent = "Budgeting mode: Monthly";
     return;
   }
 
@@ -312,6 +366,7 @@ function saveSettings() {
   const emojiInput = document.getElementById("appEmojiInput");
   const paydayInput = document.getElementById("paydayInput");
   const frequencyInput = document.getElementById("payFrequencySelect");
+  const budgetModeInput = document.getElementById("budgetModeSelect");
 
   if (!nameInput || !emojiInput) {
     return;
@@ -335,6 +390,11 @@ function saveSettings() {
 
   if (frequencyInput && frequencyInput.value) {
     appData.settings.payFrequencyDays = Number(frequencyInput.value) || 14;
+  }
+
+  if (budgetModeInput && budgetModeInput.value) {
+    appData.settings.budgetMode =
+      budgetModeInput.value === "monthly" ? "monthly" : "biweekly";
   }
 
   saveAppData();
@@ -391,7 +451,7 @@ function updateDashboard() {
   }
 
   if (monthlyBillsElement) {
-    monthlyBillsElement.textContent = formatMoney(getBillsTotalForPayPeriod());
+    monthlyBillsElement.textContent = formatMoney(getBillsTotalForCurrentPeriod());
   }
 
   if (moneyLeftElement) {
@@ -893,9 +953,10 @@ function renderBills() {
 
   const activeBills = appData.bills.filter((bill) => !bill.removed);
   const paidBills = activeBills.filter((bill) => bill.paid).length;
-  const dueThisPeriodIds = new Set(
-    getBillsDueThisPayPeriod().map((bill) => bill.id)
-  );
+  const dueThisPeriodIds =
+    appData.settings.budgetMode === "monthly"
+      ? new Set()
+      : new Set(getBillsDueThisPayPeriod().map((bill) => bill.id));
 
   if (paidCount) {
     paidCount.textContent = `${paidBills} of ${activeBills.length} paid`;
@@ -1077,7 +1138,7 @@ function createMonthlySnapshot() {
     id: `snapshot-${Date.now()}`,
     label,
     monthlyIncome: appData.monthlyIncome,
-    billsTotal: getBillsTotalForPayPeriod(),
+    billsTotal: getBillsTotalForCurrentPeriod(),
     bills: appData.bills.map((bill) => ({ ...bill })),
     expenses: appData.expenses.map((expense) => ({ ...expense })),
     categorySpending: buildCategorySpendingSnapshot(),
@@ -1105,7 +1166,7 @@ function createPayPeriodSnapshot() {
     id: `payperiod-${Date.now()}`,
     label,
     paycheckIncome: appData.monthlyIncome,
-    billsTotal: getBillsTotalForPayPeriod(),
+    billsTotal: getBillsTotalForCurrentPeriod(),
     bills: appData.bills.map((bill) => ({ ...bill })),
     expenses: appData.expenses.map((expense) => ({ ...expense })),
     categorySpending: buildCategorySpendingSnapshot(),
@@ -1187,16 +1248,24 @@ function renderPayPeriodHistory() {
   });
 }
 
-function resetForNewPayPeriod() {
+function startNewPeriod() {
+  const isMonthly = appData.settings.budgetMode === "monthly";
+
   const confirmed = window.confirm(
-    "Start a new pay period? This saves the current pay period to history, unchecks all bills, and clears this period's expenses."
+    isMonthly
+      ? "Start a new month? This saves a snapshot of the current month, unchecks all bills, and clears this month's expenses."
+      : "Start a new pay period? This saves the current pay period to history, unchecks all bills, and clears this period's expenses."
   );
 
   if (!confirmed) {
     return;
   }
 
-  createPayPeriodSnapshot();
+  if (isMonthly) {
+    createMonthlySnapshot();
+  } else {
+    createPayPeriodSnapshot();
+  }
 
   appData.bills.forEach((bill) => {
     bill.paid = false;
@@ -1922,6 +1991,8 @@ function refreshApp() {
   applySettings();
   displayCurrentMonth();
   updatePayPeriodInfo();
+  updateDashboardLabels();
+  updateResetButtonLabel();
   updateDashboard();
   syncExpenseCategoryOptions();
   renderCategories();
@@ -1965,7 +2036,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (resetBillsButton) {
-    resetBillsButton.addEventListener("click", resetForNewPayPeriod);
+    resetBillsButton.addEventListener("click", startNewPeriod);
   }
 
   if (addDebtButton) {
@@ -2004,6 +2075,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const appEmojiInput = document.getElementById("appEmojiInput");
   const paydayInput = document.getElementById("paydayInput");
   const payFrequencySelect = document.getElementById("payFrequencySelect");
+  const budgetModeSelect = document.getElementById("budgetModeSelect");
 
   if (appNameInput) {
     appNameInput.value = appData.settings.appName;
@@ -2019,6 +2091,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (payFrequencySelect) {
     payFrequencySelect.value = String(appData.settings.payFrequencyDays);
+  }
+
+  if (budgetModeSelect) {
+    budgetModeSelect.value = appData.settings.budgetMode;
   }
 
   refreshApp();
