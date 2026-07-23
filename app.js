@@ -19,22 +19,22 @@ const startingData = {
   ],
 
   bills: [
-    { id: "rent", name: "Rent", amount: 560, paid: false, removed: false },
-    { id: "car", name: "Car Payment", amount: 560, paid: false, removed: false },
-    { id: "klarna", name: "Klarna", amount: 308, paid: false, removed: false },
-    { id: "tmobile", name: "T-Mobile", amount: 272, paid: false, removed: false },
-    { id: "statefarm", name: "State Farm Insurance", amount: 171, paid: false, removed: false },
-    { id: "signature", name: "Signature Loan", amount: 170, paid: false, removed: false },
-    { id: "gasheat", name: "Gas / Heat", amount: 165, paid: false, removed: false },
-    { id: "kamari", name: "Kamari Health Insurance", amount: 100, paid: false, removed: false },
-    { id: "electric", name: "Electric", amount: 70, paid: false, removed: false },
-    { id: "affirm", name: "Affirm", amount: 68, paid: false, removed: false },
-    { id: "merrick", name: "Merrick", amount: 50, paid: false, removed: false },
-    { id: "afterpay", name: "Afterpay", amount: 49, paid: false, removed: false },
-    { id: "biglots", name: "Big Lots", amount: 37, paid: false, removed: false },
-    { id: "capitalone", name: "Capital One", amount: 25, paid: false, removed: false },
-    { id: "mastercard", name: "Mastercard", amount: 20, paid: false, removed: false },
-    { id: "carecredit", name: "CareCredit", amount: 20, paid: false, removed: false }
+    { id: "rent", name: "Rent", amount: 560, paid: false, removed: false, dueDate: 1 },
+    { id: "car", name: "Car Payment", amount: 560, paid: false, removed: false, dueDate: 1 },
+    { id: "klarna", name: "Klarna", amount: 308, paid: false, removed: false, dueDate: 1 },
+    { id: "tmobile", name: "T-Mobile", amount: 272, paid: false, removed: false, dueDate: 1 },
+    { id: "statefarm", name: "State Farm Insurance", amount: 171, paid: false, removed: false, dueDate: 1 },
+    { id: "signature", name: "Signature Loan", amount: 170, paid: false, removed: false, dueDate: 1 },
+    { id: "gasheat", name: "Gas / Heat", amount: 165, paid: false, removed: false, dueDate: 1 },
+    { id: "kamari", name: "Kamari Health Insurance", amount: 100, paid: false, removed: false, dueDate: 1 },
+    { id: "electric", name: "Electric", amount: 70, paid: false, removed: false, dueDate: 1 },
+    { id: "affirm", name: "Affirm", amount: 68, paid: false, removed: false, dueDate: 1 },
+    { id: "merrick", name: "Merrick", amount: 50, paid: false, removed: false, dueDate: 1 },
+    { id: "afterpay", name: "Afterpay", amount: 49, paid: false, removed: false, dueDate: 1 },
+    { id: "biglots", name: "Big Lots", amount: 37, paid: false, removed: false, dueDate: 1 },
+    { id: "capitalone", name: "Capital One", amount: 25, paid: false, removed: false, dueDate: 1 },
+    { id: "mastercard", name: "Mastercard", amount: 20, paid: false, removed: false, dueDate: 1 },
+    { id: "carecredit", name: "CareCredit", amount: 20, paid: false, removed: false, dueDate: 1 }
   ],
 
   debts: [
@@ -54,7 +54,16 @@ const startingData = {
 
   expenses: [],
 
-  monthlyHistory: []
+  monthlyHistory: [],
+
+  payPeriodHistory: [],
+
+  settings: {
+    appName: "Lee's Budget",
+    appEmoji: "💰",
+    payday: new Date().toISOString().slice(0, 10),
+    payFrequencyDays: 14
+  }
 };
 
 function copyStartingData() {
@@ -75,7 +84,8 @@ function normalizeBills(bills) {
     name: bill.name,
     amount: Number(bill.amount) || 0,
     paid: Boolean(bill.paid),
-    removed: Boolean(bill.removed)
+    removed: Boolean(bill.removed),
+    dueDate: Number(bill.dueDate) || 1
   }));
 }
 
@@ -88,6 +98,17 @@ function normalizeDebts(debts) {
     paidOff: Boolean(debt.paidOff),
     payoffDate: debt.payoffDate || null
   }));
+}
+
+function normalizeSettings(settings) {
+  const defaults = copyStartingData().settings;
+
+  return {
+    appName: (settings && settings.appName) || defaults.appName,
+    appEmoji: (settings && settings.appEmoji) || defaults.appEmoji,
+    payday: (settings && settings.payday) || defaults.payday,
+    payFrequencyDays: (settings && Number(settings.payFrequencyDays)) || 14
+  };
 }
 
 function loadAppData() {
@@ -109,7 +130,9 @@ function loadAppData() {
       debts: normalizeDebts(parsedData.debts || defaults.debts),
       archivedDebts: normalizeDebts(parsedData.archivedDebts || []),
       expenses: parsedData.expenses || [],
-      monthlyHistory: parsedData.monthlyHistory || []
+      monthlyHistory: parsedData.monthlyHistory || [],
+      payPeriodHistory: parsedData.payPeriodHistory || [],
+      settings: normalizeSettings(parsedData.settings)
     };
   } catch (error) {
     console.error("Budget data could not be loaded:", error);
@@ -143,10 +166,78 @@ function escapeText(value) {
     .replaceAll("'", "&#039;");
 }
 
-function getMonthlyBillsTotal() {
-  return appData.bills
-    .filter((bill) => !bill.removed)
-    .reduce((total, bill) => total + Number(bill.amount), 0);
+function ordinal(n) {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const value = n % 100;
+  return n + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0]);
+}
+
+function getNextPayday(referenceDate) {
+  const frequency = Number(appData.settings.payFrequencyDays) || 14;
+  let anchor = new Date(`${appData.settings.payday}T00:00:00`);
+
+  if (isNaN(anchor.getTime())) {
+    anchor = new Date();
+  }
+
+  const ref = referenceDate ? new Date(referenceDate) : new Date();
+  ref.setHours(0, 0, 0, 0);
+  anchor.setHours(0, 0, 0, 0);
+
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const diffDays = Math.round((ref.getTime() - anchor.getTime()) / msPerDay);
+  const cyclesPassed = Math.floor(diffDays / frequency);
+
+  let candidate = new Date(anchor.getTime() + cyclesPassed * frequency * msPerDay);
+
+  while (candidate.getTime() < ref.getTime()) {
+    candidate = new Date(candidate.getTime() + frequency * msPerDay);
+  }
+
+  return candidate;
+}
+
+function getNextDueDateOccurrence(dueDay, fromDate) {
+  const from = new Date(fromDate);
+  from.setHours(0, 0, 0, 0);
+
+  const day = Math.min(Math.max(Number(dueDay) || 1, 1), 31);
+
+  function clampToMonth(year, month, dayNum) {
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(dayNum, lastDay));
+  }
+
+  let candidate = clampToMonth(from.getFullYear(), from.getMonth(), day);
+
+  if (candidate.getTime() < from.getTime()) {
+    candidate = clampToMonth(from.getFullYear(), from.getMonth() + 1, day);
+  }
+
+  return candidate;
+}
+
+function getBillsDueThisPayPeriod() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const nextPayday = getNextPayday(today);
+
+  return appData.bills.filter((bill) => {
+    if (bill.removed) {
+      return false;
+    }
+
+    const dueOccurrence = getNextDueDateOccurrence(bill.dueDate, today);
+    return dueOccurrence.getTime() <= nextPayday.getTime();
+  });
+}
+
+function getBillsTotalForPayPeriod() {
+  return getBillsDueThisPayPeriod().reduce(
+    (total, bill) => total + Number(bill.amount),
+    0
+  );
 }
 
 function getTotalExpenses() {
@@ -165,9 +256,92 @@ function getCategorySpent(categoryName) {
 function getMoneyLeft() {
   return (
     Number(appData.monthlyIncome) -
-    getMonthlyBillsTotal() -
+    getBillsTotalForPayPeriod() -
     getTotalExpenses()
   );
+}
+
+function applySettings() {
+  const titleElement = document.getElementById("appTitleText");
+  const emojiElement = document.getElementById("appTitleEmoji");
+
+  if (titleElement) {
+    titleElement.textContent = appData.settings.appName;
+  }
+
+  if (emojiElement) {
+    emojiElement.textContent = appData.settings.appEmoji;
+  }
+
+  document.title = appData.settings.appName;
+}
+
+function updatePayPeriodInfo() {
+  const nextPaydayElement = document.getElementById("nextPaydayText");
+
+  if (!nextPaydayElement) {
+    return;
+  }
+
+  const nextPayday = getNextPayday(new Date());
+
+  nextPaydayElement.textContent = `Next payday: ${nextPayday.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  })}`;
+}
+
+function showSettingsMessage(message, isError = false) {
+  const messageElement = document.getElementById("settingsMessage");
+
+  if (!messageElement) {
+    return;
+  }
+
+  messageElement.textContent = message;
+  messageElement.style.color = isError ? "#c62828" : "#2e7d32";
+
+  window.setTimeout(() => {
+    messageElement.textContent = "";
+  }, 2500);
+}
+
+function saveSettings() {
+  const nameInput = document.getElementById("appNameInput");
+  const emojiInput = document.getElementById("appEmojiInput");
+  const paydayInput = document.getElementById("paydayInput");
+  const frequencyInput = document.getElementById("payFrequencySelect");
+
+  if (!nameInput || !emojiInput) {
+    return;
+  }
+
+  const newName = nameInput.value.trim();
+  const newEmoji = emojiInput.value.trim();
+
+  if (!newName) {
+    showSettingsMessage("Enter an app name.", true);
+    nameInput.focus();
+    return;
+  }
+
+  appData.settings.appName = newName;
+  appData.settings.appEmoji = newEmoji || "💰";
+
+  if (paydayInput && paydayInput.value) {
+    appData.settings.payday = paydayInput.value;
+  }
+
+  if (frequencyInput && frequencyInput.value) {
+    appData.settings.payFrequencyDays = Number(frequencyInput.value) || 14;
+  }
+
+  saveAppData();
+  applySettings();
+  refreshApp();
+
+  showSettingsMessage("Settings saved.");
 }
 
 function displayCurrentMonth() {
@@ -185,7 +359,7 @@ function displayCurrentMonth() {
 
 function editIncome() {
   const newIncomeInput = window.prompt(
-    "Monthly income:",
+    "Paycheck income:",
     String(appData.monthlyIncome)
   );
 
@@ -217,7 +391,7 @@ function updateDashboard() {
   }
 
   if (monthlyBillsElement) {
-    monthlyBillsElement.textContent = formatMoney(getMonthlyBillsTotal());
+    monthlyBillsElement.textContent = formatMoney(getBillsTotalForPayPeriod());
   }
 
   if (moneyLeftElement) {
@@ -521,6 +695,31 @@ function setupTabs() {
   });
 }
 
+function setupHistorySubTabs() {
+  const subButtons = document.querySelectorAll(".history-subtab-button");
+  const subPanels = document.querySelectorAll(".history-subpanel");
+
+  subButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      subButtons.forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      subPanels.forEach((panel) => {
+        panel.classList.remove("active");
+      });
+
+      button.classList.add("active");
+
+      const target = document.getElementById(button.dataset.subtab);
+
+      if (target) {
+        target.classList.add("active");
+      }
+    });
+  });
+}
+
 function showExpenseMessage(message, isError = false) {
   const messageElement = document.getElementById("expenseMessage");
 
@@ -694,6 +893,9 @@ function renderBills() {
 
   const activeBills = appData.bills.filter((bill) => !bill.removed);
   const paidBills = activeBills.filter((bill) => bill.paid).length;
+  const dueThisPeriodIds = new Set(
+    getBillsDueThisPayPeriod().map((bill) => bill.id)
+  );
 
   if (paidCount) {
     paidCount.textContent = `${paidBills} of ${activeBills.length} paid`;
@@ -706,6 +908,8 @@ function renderBills() {
   activeBills.forEach((bill) => {
     const billRow = document.createElement("div");
     billRow.className = `bill-row ${bill.paid ? "bill-paid" : ""}`;
+
+    const dueThisPeriod = dueThisPeriodIds.has(bill.id);
 
     billRow.innerHTML = `
       <div class="row-top">
@@ -720,7 +924,8 @@ function renderBills() {
           <span>
             <span class="row-name">${escapeText(bill.name)}</span>
             <span class="row-subtitle">
-              ${bill.paid ? "Paid" : "Not paid yet"}
+              ${bill.paid ? "Paid" : "Not paid yet"} · Due ${ordinal(bill.dueDate)}
+              ${dueThisPeriod && !bill.paid ? '<span class="due-badge">Due before payday</span>' : ""}
             </span>
           </span>
         </label>
@@ -752,7 +957,7 @@ function renderBills() {
       bill.paid = checkbox.checked;
 
       saveAppData();
-      renderBills();
+      refreshApp();
     });
   });
 
@@ -805,8 +1010,25 @@ function editBill(billId) {
     return;
   }
 
+  const newDueDateInput = window.prompt(
+    "Due date (day of month, 1-31):",
+    String(bill.dueDate)
+  );
+
+  if (newDueDateInput === null) {
+    return;
+  }
+
+  const newDueDate = Number(newDueDateInput);
+
+  if (!Number.isFinite(newDueDate) || newDueDate < 1 || newDueDate > 31) {
+    window.alert("Enter a valid day of month between 1 and 31.");
+    return;
+  }
+
   bill.name = trimmedName;
   bill.amount = Number(newAmount.toFixed(2));
+  bill.dueDate = Math.round(newDueDate);
 
   saveAppData();
   refreshApp();
@@ -831,16 +1053,150 @@ function deleteBill(billId) {
   refreshApp();
 }
 
-function resetForNewMonth() {
+function buildCategorySpendingSnapshot() {
+  return appData.categories.map((category) => ({
+    name: category.name,
+    budget: category.budget,
+    moneyAddedThisMonth: category.moneyAddedThisMonth || 0,
+    spent: getCategorySpent(category.name)
+  }));
+}
+
+function createMonthlySnapshot() {
+  const now = new Date();
+  const label = now.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric"
+  });
+
+  const savingsCategory = appData.categories.find(
+    (category) => category.name === "Savings"
+  );
+
+  const snapshot = {
+    id: `snapshot-${Date.now()}`,
+    label,
+    monthlyIncome: appData.monthlyIncome,
+    billsTotal: getBillsTotalForPayPeriod(),
+    bills: appData.bills.map((bill) => ({ ...bill })),
+    expenses: appData.expenses.map((expense) => ({ ...expense })),
+    categorySpending: buildCategorySpendingSnapshot(),
+    moneyLeft: getMoneyLeft(),
+    debts: appData.debts.map((debt) => ({ ...debt })),
+    savingsAmount: savingsCategory ? savingsCategory.budget : 0
+  };
+
+  appData.monthlyHistory.unshift(snapshot);
+}
+
+function createPayPeriodSnapshot() {
+  const nextPayday = getNextPayday(new Date());
+  const label = `Pay period ending ${nextPayday.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  })}`;
+
+  const savingsCategory = appData.categories.find(
+    (category) => category.name === "Savings"
+  );
+
+  const snapshot = {
+    id: `payperiod-${Date.now()}`,
+    label,
+    paycheckIncome: appData.monthlyIncome,
+    billsTotal: getBillsTotalForPayPeriod(),
+    bills: appData.bills.map((bill) => ({ ...bill })),
+    expenses: appData.expenses.map((expense) => ({ ...expense })),
+    categorySpending: buildCategorySpendingSnapshot(),
+    moneyLeft: getMoneyLeft(),
+    debts: appData.debts.map((debt) => ({ ...debt })),
+    savingsAmount: savingsCategory ? savingsCategory.budget : 0
+  };
+
+  appData.payPeriodHistory.unshift(snapshot);
+}
+
+function renderMonthlyHistory() {
+  const container = document.getElementById("monthlyHistoryList");
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+
+  if (appData.monthlyHistory.length === 0) {
+    container.innerHTML = `<div class="empty-state">No monthly snapshots yet.</div>`;
+    return;
+  }
+
+  appData.monthlyHistory.forEach((snapshot) => {
+    const paidCount = snapshot.bills.filter((bill) => bill.paid).length;
+
+    const row = document.createElement("div");
+    row.className = "history-row month-snapshot-row";
+
+    row.innerHTML = `
+      <div class="history-details">
+        <div class="row-name">${escapeText(snapshot.label)}</div>
+        <div class="history-note">
+          Income ${formatMoney(snapshot.monthlyIncome)} · Bills ${formatMoney(snapshot.billsTotal)} ·
+          Money Left ${formatMoney(snapshot.moneyLeft)} · ${paidCount} of ${snapshot.bills.length} bills paid ·
+          ${snapshot.expenses.length} expense(s) logged · Savings ${formatMoney(snapshot.savingsAmount)}
+        </div>
+      </div>
+    `;
+
+    container.appendChild(row);
+  });
+}
+
+function renderPayPeriodHistory() {
+  const container = document.getElementById("payPeriodHistoryList");
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = "";
+
+  if (appData.payPeriodHistory.length === 0) {
+    container.innerHTML = `<div class="empty-state">No completed pay periods yet.</div>`;
+    return;
+  }
+
+  appData.payPeriodHistory.forEach((snapshot) => {
+    const paidCount = snapshot.bills.filter((bill) => bill.paid).length;
+
+    const row = document.createElement("div");
+    row.className = "history-row month-snapshot-row";
+
+    row.innerHTML = `
+      <div class="history-details">
+        <div class="row-name">${escapeText(snapshot.label)}</div>
+        <div class="history-note">
+          Paycheck ${formatMoney(snapshot.paycheckIncome)} · Bills ${formatMoney(snapshot.billsTotal)} ·
+          Money Left ${formatMoney(snapshot.moneyLeft)} · ${paidCount} of ${snapshot.bills.length} bills paid ·
+          ${snapshot.expenses.length} expense(s) logged · Savings ${formatMoney(snapshot.savingsAmount)}
+        </div>
+      </div>
+    `;
+
+    container.appendChild(row);
+  });
+}
+
+function resetForNewPayPeriod() {
   const confirmed = window.confirm(
-    "Start a new month? This saves a snapshot of the current month, unchecks all bills, and clears this month's expenses."
+    "Start a new pay period? This saves the current pay period to history, unchecks all bills, and clears this period's expenses."
   );
 
   if (!confirmed) {
     return;
   }
 
-  createMonthlySnapshot();
+  createPayPeriodSnapshot();
 
   appData.bills.forEach((bill) => {
     bill.paid = false;
@@ -851,48 +1207,6 @@ function resetForNewMonth() {
   appData.categories.forEach((category) => {
     category.moneyAddedThisMonth = 0;
   });
-
-  saveAppData();
-  refreshApp();
-}
-
-function applyDebtPayment(debtId) {
-  const debt = appData.debts.find((item) => item.id === debtId);
-
-  if (!debt) {
-    return;
-  }
-
-  const confirmed = window.confirm(
-    `Apply your ${formatMoney(debt.minimumPayment)} payment to ${debt.name}?`
-  );
-
-  if (!confirmed) {
-    return;
-  }
-
-  const matchingBill = appData.bills.find((bill) => bill.id === debtId);
-  const newBalance = Number(debt.balance) - Number(debt.minimumPayment);
-
-  if (newBalance <= 0) {
-    debt.balance = 0;
-    debt.paidOff = true;
-    debt.payoffDate = new Date().toISOString();
-
-    if (matchingBill) {
-      matchingBill.removed = true;
-      matchingBill.paid = false;
-    }
-
-    appData.debts = appData.debts.filter((item) => item.id !== debtId);
-    appData.archivedDebts.push(debt);
-  } else {
-    debt.balance = newBalance;
-
-    if (matchingBill) {
-      matchingBill.paid = true;
-    }
-  }
 
   saveAppData();
   refreshApp();
@@ -926,6 +1240,61 @@ function markDebtPaidOff(debtId) {
 
   appData.debts = appData.debts.filter((item) => item.id !== debtId);
   appData.archivedDebts.push(debt);
+
+  saveAppData();
+  refreshApp();
+}
+
+function applyDebtPayment(debtId) {
+  const debt = appData.debts.find((item) => item.id === debtId);
+
+  if (!debt) {
+    return;
+  }
+
+  const paymentInput = document.querySelector(
+    `.payment-to-apply-input[data-debt-id="${debtId}"]`
+  );
+
+  const paymentAmount = paymentInput
+    ? Number(paymentInput.value)
+    : Number(debt.minimumPayment);
+
+  if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+    window.alert("Enter a valid payment amount.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Apply your ${formatMoney(paymentAmount)} payment to ${debt.name}?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const matchingBill = appData.bills.find((bill) => bill.id === debtId);
+  const newBalance = Number(debt.balance) - paymentAmount;
+
+  if (newBalance <= 0) {
+    debt.balance = 0;
+    debt.paidOff = true;
+    debt.payoffDate = new Date().toISOString();
+
+    if (matchingBill) {
+      matchingBill.removed = true;
+      matchingBill.paid = false;
+    }
+
+    appData.debts = appData.debts.filter((item) => item.id !== debtId);
+    appData.archivedDebts.push(debt);
+  } else {
+    debt.balance = Number(newBalance.toFixed(2));
+
+    if (matchingBill) {
+      matchingBill.paid = true;
+    }
+  }
 
   saveAppData();
   refreshApp();
@@ -1001,7 +1370,7 @@ function editDebt(debtId) {
   }
 
   const newMinimumInput = window.prompt(
-    "Minimum payment:",
+    "Required minimum payment:",
     String(debt.minimumPayment)
   );
 
@@ -1061,45 +1430,6 @@ function deleteDebt(debtId) {
   refreshApp();
 }
 
-function updateDebtBalance(debtId, newBalance) {
-  const debt = appData.debts.find((item) => item.id === debtId);
-
-  if (!debt) {
-    return;
-  }
-
-  const parsedBalance = Number(newBalance);
-
-  debt.balance = Number.isFinite(parsedBalance) && parsedBalance >= 0
-    ? parsedBalance
-    : 0;
-
-  saveAppData();
-}
-
-function updateDebtMinimumPayment(debtId, newMinimumPayment) {
-  const debt = appData.debts.find((item) => item.id === debtId);
-
-  if (!debt) {
-    return;
-  }
-
-  const parsedPayment = Number(newMinimumPayment);
-
-  debt.minimumPayment = Number.isFinite(parsedPayment) && parsedPayment >= 0
-    ? parsedPayment
-    : 0;
-
-  const matchingBill = appData.bills.find((bill) => bill.id === debtId);
-
-  if (matchingBill && !matchingBill.removed) {
-    matchingBill.amount = debt.minimumPayment;
-  }
-
-  saveAppData();
-  refreshApp();
-}
-
 function renderDebts() {
   const debtList = document.getElementById("debtList");
   const archivedDebtList = document.getElementById("archivedDebtList");
@@ -1119,37 +1449,32 @@ function renderDebts() {
         <div class="row-top">
           <div>
             <div class="row-name">${escapeText(debt.name)}</div>
-            <div class="row-subtitle">
-              Minimum payment ${formatMoney(debt.minimumPayment)}
-            </div>
           </div>
         </div>
 
         <div class="debt-fields">
-          <label class="debt-field-label">
-            Balance
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              class="debt-balance-input"
-              data-debt-id="${debt.id}"
-              value="${debt.balance}"
-            >
-          </label>
+          <div class="debt-stat">
+            <span class="debt-stat-label">Current Balance</span>
+            <span class="debt-stat-value">${formatMoney(debt.balance)}</span>
+          </div>
 
-          <label class="debt-field-label">
-            Minimum Payment
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              class="debt-minimum-input"
-              data-debt-id="${debt.id}"
-              value="${debt.minimumPayment}"
-            >
-          </label>
+          <div class="debt-stat">
+            <span class="debt-stat-label">Required Minimum Payment</span>
+            <span class="debt-stat-value">${formatMoney(debt.minimumPayment)}</span>
+          </div>
         </div>
+
+        <label class="debt-field-label">
+          Payment To Apply
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            class="payment-to-apply-input"
+            data-debt-id="${debt.id}"
+            value="${debt.minimumPayment}"
+          >
+        </label>
 
         <div class="debt-actions two-col">
           <button type="button" class="small-button secondary-button edit-debt-button" data-debt-id="${debt.id}">Edit</button>
@@ -1204,18 +1529,6 @@ function renderDebts() {
       archivedDebtList.appendChild(debtRow);
     });
   }
-
-  document.querySelectorAll(".debt-balance-input").forEach((input) => {
-    input.addEventListener("change", () => {
-      updateDebtBalance(input.dataset.debtId, input.value);
-    });
-  });
-
-  document.querySelectorAll(".debt-minimum-input").forEach((input) => {
-    input.addEventListener("change", () => {
-      updateDebtMinimumPayment(input.dataset.debtId, input.value);
-    });
-  });
 
   document.querySelectorAll(".apply-payment-button").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1310,7 +1623,8 @@ function addDebt() {
     name,
     amount: newDebt.minimumPayment,
     paid: false,
-    removed: false
+    removed: false,
+    dueDate: 1
   };
 
   appData.debts.push(newDebt);
@@ -1345,6 +1659,7 @@ function showBillMessage(message, isError = false) {
 function addBill() {
   const nameInput = document.getElementById("billName");
   const amountInput = document.getElementById("billAmount");
+  const dueDateInput = document.getElementById("billDueDate");
 
   if (!nameInput || !amountInput) {
     return;
@@ -1352,6 +1667,7 @@ function addBill() {
 
   const name = nameInput.value.trim();
   const amount = Number(amountInput.value);
+  const dueDate = dueDateInput ? Number(dueDateInput.value) : 1;
 
   if (!name) {
     showBillMessage("Enter a bill name.", true);
@@ -1365,12 +1681,21 @@ function addBill() {
     return;
   }
 
+  if (!Number.isFinite(dueDate) || dueDate < 1 || dueDate > 31) {
+    showBillMessage("Enter a valid due date (1-31).", true);
+    if (dueDateInput) {
+      dueDateInput.focus();
+    }
+    return;
+  }
+
   const newBill = {
     id: `bill-${Date.now()}`,
     name,
     amount: Number(amount.toFixed(2)),
     paid: false,
-    removed: false
+    removed: false,
+    dueDate: Math.round(dueDate)
   };
 
   appData.bills.push(newBill);
@@ -1380,6 +1705,10 @@ function addBill() {
 
   nameInput.value = "";
   amountInput.value = "";
+
+  if (dueDateInput) {
+    dueDateInput.value = "";
+  }
 
   showBillMessage("Bill added.");
   nameInput.focus();
@@ -1476,77 +1805,6 @@ function syncExpenseCategoryOptions() {
   }
 }
 
-function buildCategorySpendingSnapshot() {
-  return appData.categories.map((category) => ({
-    name: category.name,
-    budget: category.budget,
-    moneyAddedThisMonth: category.moneyAddedThisMonth || 0,
-    spent: getCategorySpent(category.name)
-  }));
-}
-
-function createMonthlySnapshot() {
-  const now = new Date();
-  const label = now.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric"
-  });
-
-  const savingsCategory = appData.categories.find(
-    (category) => category.name === "Savings"
-  );
-
-  const snapshot = {
-    id: `snapshot-${Date.now()}`,
-    label,
-    monthlyIncome: appData.monthlyIncome,
-    billsTotal: getMonthlyBillsTotal(),
-    bills: appData.bills.map((bill) => ({ ...bill })),
-    expenses: appData.expenses.map((expense) => ({ ...expense })),
-    categorySpending: buildCategorySpendingSnapshot(),
-    moneyLeft: getMoneyLeft(),
-    debts: appData.debts.map((debt) => ({ ...debt })),
-    savingsAmount: savingsCategory ? savingsCategory.budget : 0
-  };
-
-  appData.monthlyHistory.unshift(snapshot);
-}
-
-function renderMonthlyHistory() {
-  const container = document.getElementById("monthlyHistoryList");
-
-  if (!container) {
-    return;
-  }
-
-  container.innerHTML = "";
-
-  if (appData.monthlyHistory.length === 0) {
-    container.innerHTML = `<div class="empty-state">No monthly snapshots yet.</div>`;
-    return;
-  }
-
-  appData.monthlyHistory.forEach((snapshot) => {
-    const paidCount = snapshot.bills.filter((bill) => bill.paid).length;
-
-    const row = document.createElement("div");
-    row.className = "history-row month-snapshot-row";
-
-    row.innerHTML = `
-      <div class="history-details">
-        <div class="row-name">${escapeText(snapshot.label)}</div>
-        <div class="history-note">
-          Income ${formatMoney(snapshot.monthlyIncome)} · Bills ${formatMoney(snapshot.billsTotal)} ·
-          Money Left ${formatMoney(snapshot.moneyLeft)} · ${paidCount} of ${snapshot.bills.length} bills paid ·
-          ${snapshot.expenses.length} expense(s) logged · Savings ${formatMoney(snapshot.savingsAmount)}
-        </div>
-      </div>
-    `;
-
-    container.appendChild(row);
-  });
-}
-
 function showBackupMessage(message, isError = false) {
   const messageElement = document.getElementById("backupMessage");
 
@@ -1638,7 +1896,9 @@ function handleImportFile(file) {
         debts: normalizeDebts(parsed.debts || defaults.debts),
         archivedDebts: normalizeDebts(parsed.archivedDebts || []),
         expenses: parsed.expenses || [],
-        monthlyHistory: parsed.monthlyHistory || []
+        monthlyHistory: parsed.monthlyHistory || [],
+        payPeriodHistory: parsed.payPeriodHistory || [],
+        settings: normalizeSettings(parsed.settings)
       };
 
       saveAppData();
@@ -1659,7 +1919,9 @@ function handleImportFile(file) {
 }
 
 function refreshApp() {
+  applySettings();
   displayCurrentMonth();
+  updatePayPeriodInfo();
   updateDashboard();
   syncExpenseCategoryOptions();
   renderCategories();
@@ -1667,10 +1929,12 @@ function refreshApp() {
   renderBills();
   renderDebts();
   renderMonthlyHistory();
+  renderPayPeriodHistory();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   setupTabs();
+  setupHistorySubTabs();
 
   const addExpenseButton = document.getElementById("addExpenseButton");
   const amountInput = document.getElementById("expenseAmount");
@@ -1682,6 +1946,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportBackupButton = document.getElementById("exportBackupButton");
   const importBackupInput = document.getElementById("importBackupInput");
   const editIncomeButton = document.getElementById("editIncomeButton");
+  const saveSettingsButton = document.getElementById("saveSettingsButton");
 
   if (addExpenseButton) {
     addExpenseButton.addEventListener("click", addExpense);
@@ -1700,7 +1965,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (resetBillsButton) {
-    resetBillsButton.addEventListener("click", resetForNewMonth);
+    resetBillsButton.addEventListener("click", resetForNewPayPeriod);
   }
 
   if (addDebtButton) {
@@ -1729,6 +1994,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (editIncomeButton) {
     editIncomeButton.addEventListener("click", editIncome);
+  }
+
+  if (saveSettingsButton) {
+    saveSettingsButton.addEventListener("click", saveSettings);
+  }
+
+  const appNameInput = document.getElementById("appNameInput");
+  const appEmojiInput = document.getElementById("appEmojiInput");
+  const paydayInput = document.getElementById("paydayInput");
+  const payFrequencySelect = document.getElementById("payFrequencySelect");
+
+  if (appNameInput) {
+    appNameInput.value = appData.settings.appName;
+  }
+
+  if (appEmojiInput) {
+    appEmojiInput.value = appData.settings.appEmoji;
+  }
+
+  if (paydayInput) {
+    paydayInput.value = appData.settings.payday;
+  }
+
+  if (payFrequencySelect) {
+    payFrequencySelect.value = String(appData.settings.payFrequencyDays);
   }
 
   refreshApp();
