@@ -265,4 +265,41 @@
 
 
       <div class="card">
-        <h2>Backup &amp; Restore
+        <h2>Backup &amp; Restore</h2>
+        <p>Export your data to a file, or restore from a previous backup.</p>
+
+        <button id="exportBackupButton" type="button" class="primary-button">Export Backup</button>
+
+        <label for="importBackupInput">Import Backup</label>
+        <input id="importBackupInput" type="file" accept="application/json,.json">
+
+        <p id="backupMessage" class="message" aria-live="polite"></p>
+      </div>
+
+    </section>
+
+
+    <section id="expensesTab" class="tab-panel">
+
+      <div class="card">
+        <div class="section-heading">
+          <div>
+            <h2>Expense History</h2>
+            <p>Your most recent entries appear first.</p>
+          </div>
+        </div>
+
+        <div id="expenseHistory" class="history-list"></div>
+
+        <button id="clearHistoryButton" type="button" class="danger-button">Clear Expense History</button>
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script src="app.js?v=13"></script>
+
+</body>
+</html>
