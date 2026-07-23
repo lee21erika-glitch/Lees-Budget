@@ -38,7 +38,7 @@ const startingData = {
   ],
 
   debts: [
-    { id: "car", name: "Car Payment", balance: 0, minimumPayment: 560, paidOff: false },
+    { id: "car", name: "Car Payment", balance: 13575.34, minimumPayment: 560, paidOff: false },
     { id: "klarna", name: "Klarna", balance: 0, minimumPayment: 308, paidOff: false },
     { id: "signature", name: "Signature Loan", balance: 0, minimumPayment: 170, paidOff: false },
     { id: "affirm", name: "Affirm", balance: 0, minimumPayment: 68, paidOff: false },
