@@ -941,6 +941,43 @@ function clearExpenseHistory() {
   refreshApp();
 }
 
+function renderBillRow(bill, dueThisPeriod) {
+  const billRow = document.createElement("div");
+  billRow.className = `bill-row ${bill.paid ? "bill-paid" : ""}`;
+
+  billRow.innerHTML = `
+    <div class="row-top">
+      <label class="bill-check">
+        <input
+          type="checkbox"
+          class="bill-checkbox"
+          data-bill-id="${bill.id}"
+          ${bill.paid ? "checked" : ""}
+        >
+
+        <span>
+          <span class="row-name">${escapeText(bill.name)}</span>
+          <span class="row-subtitle">
+            ${bill.paid ? "Paid" : "Not paid yet"} · Due ${ordinal(bill.dueDate)}
+            ${dueThisPeriod && !bill.paid ? '<span class="due-badge">Due before payday</span>' : ""}
+          </span>
+        </span>
+      </label>
+
+      <div class="amount">
+        ${formatMoney(bill.amount)}
+      </div>
+    </div>
+
+    <div class="bill-actions">
+      <button type="button" class="small-button secondary-button edit-bill-button" data-bill-id="${bill.id}">Edit</button>
+      <button type="button" class="small-button danger-button delete-bill-button" data-bill-id="${bill.id}">Delete</button>
+    </div>
+  `;
+
+  return billRow;
+}
+
 function renderBills() {
   const billList = document.getElementById("billList");
   const paidCount = document.getElementById("billsPaidCount");
@@ -953,10 +990,7 @@ function renderBills() {
 
   const activeBills = appData.bills.filter((bill) => !bill.removed);
   const paidBills = activeBills.filter((bill) => bill.paid).length;
-  const dueThisPeriodIds =
-    appData.settings.budgetMode === "monthly"
-      ? new Set()
-      : new Set(getBillsDueThisPayPeriod().map((bill) => bill.id));
+  const isMonthly = appData.settings.budgetMode === "monthly";
 
   if (paidCount) {
     paidCount.textContent = `${paidBills} of ${activeBills.length} paid`;
@@ -964,46 +998,50 @@ function renderBills() {
 
   if (activeBills.length === 0) {
     billList.innerHTML = `<div class="empty-state">No bills yet.</div>`;
+  } else if (isMonthly) {
+    const sortedBills = [...activeBills].sort((a, b) => a.dueDate - b.dueDate);
+
+    sortedBills.forEach((bill) => {
+      billList.appendChild(renderBillRow(bill, false));
+    });
+  } else {
+    const dueThisPeriodIds = new Set(
+      getBillsDueThisPayPeriod().map((bill) => bill.id)
+    );
+
+    const dueSoon = activeBills
+      .filter((bill) => dueThisPeriodIds.has(bill.id))
+      .sort((a, b) => a.dueDate - b.dueDate);
+
+    const dueLater = activeBills
+      .filter((bill) => !dueThisPeriodIds.has(bill.id))
+      .sort((a, b) => a.dueDate - b.dueDate);
+
+    const dueSoonHeading = document.createElement("div");
+    dueSoonHeading.className = "bill-group-heading";
+    dueSoonHeading.textContent = `Due Before Payday (${dueSoon.length})`;
+    billList.appendChild(dueSoonHeading);
+
+    if (dueSoon.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "No bills due before your next payday.";
+      billList.appendChild(empty);
+    } else {
+      dueSoon.forEach((bill) => {
+        billList.appendChild(renderBillRow(bill, true));
+      });
+    }
+
+    const dueLaterHeading = document.createElement("div");
+    dueLaterHeading.className = "bill-group-heading";
+    dueLaterHeading.textContent = `Due Later (${dueLater.length})`;
+    billList.appendChild(dueLaterHeading);
+
+    dueLater.forEach((bill) => {
+      billList.appendChild(renderBillRow(bill, false));
+    });
   }
-
-  activeBills.forEach((bill) => {
-    const billRow = document.createElement("div");
-    billRow.className = `bill-row ${bill.paid ? "bill-paid" : ""}`;
-
-    const dueThisPeriod = dueThisPeriodIds.has(bill.id);
-
-    billRow.innerHTML = `
-      <div class="row-top">
-        <label class="bill-check">
-          <input
-            type="checkbox"
-            class="bill-checkbox"
-            data-bill-id="${bill.id}"
-            ${bill.paid ? "checked" : ""}
-          >
-
-          <span>
-            <span class="row-name">${escapeText(bill.name)}</span>
-            <span class="row-subtitle">
-              ${bill.paid ? "Paid" : "Not paid yet"} · Due ${ordinal(bill.dueDate)}
-              ${dueThisPeriod && !bill.paid ? '<span class="due-badge">Due before payday</span>' : ""}
-            </span>
-          </span>
-        </label>
-
-        <div class="amount">
-          ${formatMoney(bill.amount)}
-        </div>
-      </div>
-
-      <div class="bill-actions">
-        <button type="button" class="small-button secondary-button edit-bill-button" data-bill-id="${bill.id}">Edit</button>
-        <button type="button" class="small-button danger-button delete-bill-button" data-bill-id="${bill.id}">Delete</button>
-      </div>
-    `;
-
-    billList.appendChild(billRow);
-  });
 
   document.querySelectorAll(".bill-checkbox").forEach((checkbox) => {
     checkbox.addEventListener("change", () => {
