@@ -492,3 +492,53 @@ button {
   overflow: visible;
   white-space: normal;
 }
+
+.history-amount {
+  white-space: nowrap;
+  font-weight: 750;
+}
+
+@media (max-width: 520px) {
+  body {
+    padding: 14px 12px 90px;
+  }
+
+  .app-header h1 {
+    font-size: 27px;
+  }
+
+  .summary-card strong {
+    font-size: 20px;
+  }
+
+  .summary-card.main-balance strong {
+    font-size: 34px;
+  }
+
+  .section-heading {
+    display: block;
+  }
+
+  .section-heading strong {
+    display: block;
+    margin-top: 8px;
+  }
+
+  .tab-button {
+    font-size: 10.5px;
+    padding: 8px 2px;
+  }
+
+  .debt-actions,
+  .category-actions,
+  .bill-actions {
+    gap: 6px;
+  }
+
+  .debt-actions button,
+  .category-actions button,
+  .bill-actions button {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+}
