@@ -361,6 +361,75 @@ button {
   color: var(--text);
 }
 
+.debt-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.debt-stat-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.debt-stat-value {
+  font-weight: 750;
+  font-size: 16px;
+}
+
+.due-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  background: var(--yellow-light);
+  color: #8a5a00;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.next-payday-text {
+  margin: -6px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.history-subtabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 5px;
+  background: var(--background);
+  border-radius: 12px;
+}
+
+.history-subtab-button {
+  min-height: 40px;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.history-subtab-button.active {
+  background: var(--green);
+  color: white;
+}
+
+.history-subpanel {
+  display: none;
+}
+
+.history-subpanel.active {
+  display: block;
+}
+
 .income-edit-button {
   margin-top: 8px;
 }
