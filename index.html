@@ -19,7 +19,7 @@
 <body>
 
   <header class="app-header">
-    <h1>💰 Lee's Budget</h1>
+    <h1><span id="appTitleEmoji">💰</span> <span id="appTitleText">Lee's Budget</span></h1>
     <p id="currentMonth"></p>
   </header>
 
@@ -28,23 +28,23 @@
     <section class="summary-grid">
 
       <div class="summary-card">
-        <span>Monthly Income</span>
+        <span>Paycheck Income</span>
         <strong id="monthlyIncome">$5,200.00</strong>
         <button id="editIncomeButton" type="button" class="small-button secondary-button income-edit-button">Edit</button>
       </div>
 
       <div class="summary-card">
-        <span>Bills & Debt</span>
+        <span>Bills This Pay Period</span>
         <strong id="monthlyBills">$2,645.00</strong>
       </div>
 
       <div class="summary-card main-balance">
-        <span>Money Left This Month</span>
+        <span>Money Left Until Payday</span>
         <strong id="moneyLeft">$2,555.00</strong>
       </div>
 
       <div class="summary-card">
-        <span>Spent So Far</span>
+        <span>Spent This Pay Period</span>
         <strong id="spentSoFar">$0.00</strong>
       </div>
 
@@ -56,8 +56,8 @@
       <button type="button" class="tab-button active" data-tab="budget">Budget</button>
       <button type="button" class="tab-button" data-tab="bills">Bills</button>
       <button type="button" class="tab-button" data-tab="debts">Debts</button>
-      <button type="button" class="tab-button" data-tab="monthly">Monthly</button>
       <button type="button" class="tab-button" data-tab="history">History</button>
+      <button type="button" class="tab-button" data-tab="expenses">Expenses</button>
 
     </nav>
 
@@ -127,16 +127,18 @@
       <div class="card">
         <div class="section-heading">
           <div>
-            <h2>Monthly Bills</h2>
+            <h2>Bills</h2>
             <p>Check each bill when it is paid.</p>
           </div>
           <strong id="billsPaidCount">0 of 16 paid</strong>
         </div>
 
+        <p id="nextPaydayText" class="next-payday-text"></p>
+
         <div id="billList" class="bill-list"></div>
 
         <button id="resetBillsButton" type="button" class="secondary-button">
-          Start New Month (Reset Bills &amp; Expenses)
+          Start New Pay Period (Reset Bills &amp; Expenses)
         </button>
       </div>
 
@@ -149,6 +151,9 @@
 
         <label for="billAmount">Monthly Amount</label>
         <input id="billAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+
+        <label for="billDueDate">Due Date (day of month)</label>
+        <input id="billDueDate" type="number" min="1" max="31" step="1" placeholder="e.g. 15">
 
         <button id="addBillButton" type="button" class="primary-button">Add Bill</button>
 
@@ -193,7 +198,7 @@
         <label for="debtBalance">Starting Balance</label>
         <input id="debtBalance" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
 
-        <label for="debtMinimumPayment">Minimum Payment</label>
+        <label for="debtMinimumPayment">Required Minimum Payment</label>
         <input id="debtMinimumPayment" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
 
         <button id="addDebtButton" type="button" class="primary-button">Add Debt</button>
@@ -204,17 +209,52 @@
     </section>
 
 
-    <section id="monthlyTab" class="tab-panel">
+    <section id="historyTab" class="tab-panel">
+
+      <div class="card">
+        <h2>App Settings</h2>
+        <p>Rename this app, and set your payday for accurate pay-period calculations.</p>
+
+        <label for="appNameInput">App Name</label>
+        <input id="appNameInput" type="text" placeholder="e.g. Smith Family Budget">
+
+        <label for="appEmojiInput">App Icon (emoji)</label>
+        <input id="appEmojiInput" type="text" placeholder="💰" maxlength="4">
+
+        <label for="paydayInput">A Recent or Upcoming Payday</label>
+        <input id="paydayInput" type="date">
+
+        <label for="payFrequencySelect">Pay Frequency</label>
+        <select id="payFrequencySelect">
+          <option value="14">Biweekly (every 14 days)</option>
+        </select>
+
+        <button id="saveSettingsButton" type="button" class="primary-button">Save Settings</button>
+
+        <p id="settingsMessage" class="message" aria-live="polite"></p>
+      </div>
+
 
       <div class="card">
         <div class="section-heading">
           <div>
-            <h2>Monthly History</h2>
-            <p>A snapshot is saved each time you start a new month.</p>
+            <h2>History</h2>
+            <p>Switch between monthly and pay-period views.</p>
           </div>
         </div>
 
-        <div id="monthlyHistoryList" class="history-list"></div>
+        <div class="history-subtabs">
+          <button type="button" class="history-subtab-button active" data-subtab="monthlyHistoryPanel">Monthly History</button>
+          <button type="button" class="history-subtab-button" data-subtab="payPeriodHistoryPanel">Pay Period History</button>
+        </div>
+
+        <div id="monthlyHistoryPanel" class="history-subpanel active">
+          <div id="monthlyHistoryList" class="history-list"></div>
+        </div>
+
+        <div id="payPeriodHistoryPanel" class="history-subpanel">
+          <div id="payPeriodHistoryList" class="history-list"></div>
+        </div>
       </div>
 
 
@@ -233,7 +273,7 @@
     </section>
 
 
-    <section id="historyTab" class="tab-panel">
+    <section id="expensesTab" class="tab-panel">
 
       <div class="card">
         <div class="section-heading">
@@ -253,7 +293,7 @@
   </main>
 
 
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=10"></script>
 
 </body>
 </html>
