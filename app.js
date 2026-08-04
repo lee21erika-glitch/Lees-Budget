@@ -222,19 +222,32 @@ function getNextDueDateOccurrence(dueDay, fromDate) {
   return candidate;
 }
 
+function getPayPeriodBounds(referenceDate) {
+  const frequency = Number(appData.settings.payFrequencyDays) || 14;
+  const msPerDay = 24 * 60 * 60 * 1000;
+
+  const periodEnd = getNextPayday(referenceDate);
+  const periodStart = new Date(periodEnd.getTime() - frequency * msPerDay);
+
+  return { periodStart, periodEnd };
+}
+
 function getBillsDueThisPayPeriod() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const nextPayday = getNextPayday(today);
+  const { periodStart, periodEnd } = getPayPeriodBounds(today);
 
   return appData.bills.filter((bill) => {
     if (bill.removed) {
       return false;
     }
 
-    const dueOccurrence = getNextDueDateOccurrence(bill.dueDate, today);
-    return dueOccurrence.getTime() <= nextPayday.getTime();
+    const dueOccurrence = getNextDueDateOccurrence(bill.dueDate, periodStart);
+    return (
+      dueOccurrence.getTime() >= periodStart.getTime() &&
+      dueOccurrence.getTime() < periodEnd.getTime()
+    );
   });
 }
 
