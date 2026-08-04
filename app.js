@@ -15,44 +15,47 @@ const startingData = {
     { name: "Shopping", budget: 100, moneyAddedThisMonth: 0 },
     { name: "Entertainment", budget: 60, moneyAddedThisMonth: 0 },
     { name: "Miscellaneous", budget: 100, moneyAddedThisMonth: 0 },
-    { name: "Savings", budget: 695, moneyAddedThisMonth: 0 }
+    { name: "Savings", budget: 695, moneyAddedThisMonth: 0 },
+    { name: "Payday loans", budget: 1240.58, moneyAddedThisMonth: 0 }
   ],
 
   bills: [
-    { id: "rent", name: "Rent", amount: 560, paid: false, removed: false, dueDate: 1 },
-    { id: "car", name: "Car Payment", amount: 560, paid: false, removed: false, dueDate: 1 },
-    { id: "klarna", name: "Klarna", amount: 308, paid: false, removed: false, dueDate: 1 },
-    { id: "tmobile", name: "T-Mobile", amount: 272, paid: false, removed: false, dueDate: 1 },
-    { id: "statefarm", name: "State Farm Insurance", amount: 171, paid: false, removed: false, dueDate: 1 },
     { id: "signature", name: "Signature Loan", amount: 170, paid: false, removed: false, dueDate: 1 },
-    { id: "gasheat", name: "Gas / Heat", amount: 165, paid: false, removed: false, dueDate: 1 },
-    { id: "kamari", name: "Kamari Health Insurance", amount: 100, paid: false, removed: false, dueDate: 1 },
     { id: "electric", name: "Electric", amount: 70, paid: false, removed: false, dueDate: 1 },
-    { id: "affirm", name: "Affirm", amount: 68, paid: false, removed: false, dueDate: 1 },
-    { id: "merrick", name: "Merrick", amount: 50, paid: false, removed: false, dueDate: 1 },
-    { id: "afterpay", name: "Afterpay", amount: 49, paid: false, removed: false, dueDate: 1 },
-    { id: "biglots", name: "Big Lots", amount: 37, paid: false, removed: false, dueDate: 1 },
-    { id: "capitalone", name: "Capital One", amount: 25, paid: false, removed: false, dueDate: 1 },
-    { id: "mastercard", name: "Mastercard", amount: 20, paid: false, removed: false, dueDate: 1 },
-    { id: "carecredit", name: "CareCredit", amount: 20, paid: false, removed: false, dueDate: 1 }
+    { id: "bnpl1", name: "1st 1/2 BNPL", amount: 241.13, paid: false, removed: false, dueDate: 1 },
+    { id: "carecredit", name: "CareCredit", amount: 20, paid: false, removed: false, dueDate: 9 },
+    { id: "car", name: "Car Payment", amount: 560, paid: false, removed: false, dueDate: 11 },
+    { id: "tmobile", name: "T-Mobile", amount: 272, paid: false, removed: false, dueDate: 13 },
+    { id: "rent", name: "Rent", amount: 560, paid: false, removed: false, dueDate: 15 },
+    { id: "biglots", name: "Big Lots", amount: 37, paid: false, removed: false, dueDate: 19 },
+    { id: "bnpl2", name: "2nd 1/2 BNPL", amount: 112, paid: false, removed: false, dueDate: 19 },
+    { id: "gasheat", name: "Gas / Heat", amount: 165, paid: false, removed: false, dueDate: 20 },
+    { id: "capitalone", name: "Capital One", amount: 25, paid: false, removed: false, dueDate: 20 },
+    { id: "merrick", name: "Merrick", amount: 38, paid: false, removed: false, dueDate: 21 },
+    { id: "clearview", name: "Clearview Mastercard", amount: 20, paid: false, removed: false, dueDate: 21 },
+    { id: "statefarm", name: "State Farm Insurance", amount: 171, paid: false, removed: false, dueDate: 22 },
+    { id: "kamari", name: "Kamari Health Insurance", amount: 100, paid: false, removed: false, dueDate: 31 }
   ],
 
   debts: [
     { id: "car", name: "Car Payment", balance: 13575.34, minimumPayment: 560, paidOff: false },
-    { id: "klarna", name: "Klarna", balance: 0, minimumPayment: 308, paidOff: false },
-    { id: "signature", name: "Signature Loan", balance: 0, minimumPayment: 170, paidOff: false },
-    { id: "affirm", name: "Affirm", balance: 0, minimumPayment: 68, paidOff: false },
-    { id: "merrick", name: "Merrick", balance: 0, minimumPayment: 50, paidOff: false },
-    { id: "afterpay", name: "Afterpay", balance: 0, minimumPayment: 49, paidOff: false },
-    { id: "biglots", name: "Big Lots", balance: 0, minimumPayment: 37, paidOff: false },
-    { id: "capitalone", name: "Capital One", balance: 0, minimumPayment: 25, paidOff: false },
-    { id: "mastercard", name: "Mastercard", balance: 0, minimumPayment: 20, paidOff: false },
-    { id: "carecredit", name: "CareCredit", balance: 0, minimumPayment: 20, paidOff: false }
+    { id: "klarna", name: "Klarna", balance: 1869.03, minimumPayment: 308, paidOff: false },
+    { id: "signature", name: "Signature Loan", balance: 4244.92, minimumPayment: 170, paidOff: false },
+    { id: "affirm", name: "Affirm", balance: 626.87, minimumPayment: 68, paidOff: false },
+    { id: "merrick", name: "Merrick", balance: 690.70, minimumPayment: 38, paidOff: false },
+    { id: "biglots", name: "Big Lots", balance: 488.76, minimumPayment: 37, paidOff: false },
+    { id: "capitalone", name: "Capital One", balance: 536.12, minimumPayment: 25, paidOff: false },
+    { id: "clearview", name: "Clearview Mastercard", balance: 290.57, minimumPayment: 20, paidOff: false },
+    { id: "carecredit", name: "CareCredit", balance: 1141.52, minimumPayment: 20, paidOff: false }
   ],
 
-  archivedDebts: [],
+  archivedDebts: [
+    { id: "afterpay", name: "Afterpay", balance: 0, minimumPayment: 49, paidOff: true, payoffDate: "2026-08-04T00:00:00.000Z" }
+  ],
 
-  expenses: [],
+  expenses: [
+    { id: "starting-payday-loan-expense", amount: 320.08, category: "Payday loans", note: "", date: "2026-08-04T00:00:00.000Z" }
+  ],
 
   monthlyHistory: [],
 
@@ -61,7 +64,7 @@ const startingData = {
   settings: {
     appName: "Lee's Budget",
     appEmoji: "💰",
-    payday: new Date().toISOString().slice(0, 10),
+    payday: "2026-08-05",
     payFrequencyDays: 14,
     budgetMode: "biweekly"
   }
@@ -490,12 +493,61 @@ function getCategoryStatus(spent, budget) {
   return { label: "On track", className: "safe" };
 }
 
+function getTotalAllocated() {
+  return appData.categories.reduce(
+    (total, category) => total + Number(category.budget),
+    0
+  );
+}
+
+function getAvailableToAllocate() {
+  return Number(appData.monthlyIncome) - getBillsTotalForCurrentPeriod();
+}
+
+function renderAllocationSummary() {
+  const summaryElement = document.getElementById("allocationSummary");
+
+  if (!summaryElement) {
+    return;
+  }
+
+  const totalAllocated = getTotalAllocated();
+  const available = getAvailableToAllocate();
+  const difference = Number((available - totalAllocated).toFixed(2));
+
+  let statusClass = "balanced";
+  let statusText = "Fully Allocated ✓";
+
+  if (difference > 0.005) {
+    statusClass = "under";
+    statusText = `${formatMoney(difference)} left to assign to a category`;
+  } else if (difference < -0.005) {
+    statusClass = "over";
+    statusText = `Categories are over budget by ${formatMoney(Math.abs(difference))}`;
+  }
+
+  summaryElement.className = `allocation-summary ${statusClass}`;
+  summaryElement.innerHTML = `
+    <div class="allocation-row">
+      <span>Available to Allocate (Income − Bills)</span>
+      <span>${formatMoney(available)}</span>
+    </div>
+    <div class="allocation-row">
+      <span>Total Allocated to Categories</span>
+      <span>${formatMoney(totalAllocated)}</span>
+    </div>
+    <div class="allocation-status">${statusText}</div>
+  `;
+}
+
 function renderCategories() {
   const categoryList = document.getElementById("categoryList");
 
   if (!categoryList) {
     return;
   }
+
+  renderAllocationSummary();
 
   categoryList.innerHTML = "";
 
