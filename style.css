@@ -242,6 +242,53 @@ p {
   color: var(--red);
 }
 
+.allocation-summary {
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 2px solid transparent;
+}
+
+.allocation-summary .allocation-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.allocation-summary .allocation-status {
+  font-weight: 700;
+  font-size: 15px;
+  margin-top: 6px;
+}
+
+.allocation-summary.balanced {
+  background: var(--green-light);
+  border-color: var(--green);
+}
+
+.allocation-summary.balanced .allocation-status {
+  color: var(--green);
+}
+
+.allocation-summary.under {
+  background: var(--yellow-light);
+  border-color: #c99400;
+}
+
+.allocation-summary.under .allocation-status {
+  color: #8a5a00;
+}
+
+.allocation-summary.over {
+  background: var(--red-light);
+  border-color: var(--red);
+}
+
+.allocation-summary.over .allocation-status {
+  color: var(--red);
+}
+
 label {
   display: block;
   margin-bottom: 6px;
