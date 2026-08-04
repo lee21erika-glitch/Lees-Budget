@@ -6,17 +6,17 @@ const startingData = {
   monthlyIncome: 5200,
 
   categories: [
-    { name: "Groceries", budget: 600, moneyAddedThisMonth: 0 },
-    { name: "Fuel", budget: 425, moneyAddedThisMonth: 0 },
-    { name: "Dining Out", budget: 175, moneyAddedThisMonth: 0 },
-    { name: "Household", budget: 150, moneyAddedThisMonth: 0 },
-    { name: "Kids", budget: 150, moneyAddedThisMonth: 0 },
-    { name: "Pets", budget: 100, moneyAddedThisMonth: 0 },
-    { name: "Shopping", budget: 100, moneyAddedThisMonth: 0 },
-    { name: "Entertainment", budget: 60, moneyAddedThisMonth: 0 },
-    { name: "Miscellaneous", budget: 100, moneyAddedThisMonth: 0 },
-    { name: "Savings", budget: 695, moneyAddedThisMonth: 0 },
-    { name: "Payday loans", budget: 1240.58, moneyAddedThisMonth: 0 }
+    { name: "Groceries", budget: 600, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Fuel", budget: 425, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Dining Out", budget: 175, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Household", budget: 150, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Kids", budget: 150, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Pets", budget: 100, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Shopping", budget: 100, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Entertainment", budget: 60, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Miscellaneous", budget: 100, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Savings", budget: 695, moneyAddedThisMonth: 0, fixedAmount: false },
+    { name: "Payday loans", budget: 1240.58, moneyAddedThisMonth: 0, fixedAmount: true }
   ],
 
   bills: [
@@ -78,7 +78,13 @@ function normalizeCategories(categories) {
   return (categories || []).map((category) => ({
     name: category.name,
     budget: Number(category.budget) || 0,
-    moneyAddedThisMonth: Number(category.moneyAddedThisMonth) || 0
+    moneyAddedThisMonth: Number(category.moneyAddedThisMonth) || 0,
+    fixedAmount:
+      category.fixedAmount === true
+        ? true
+        : category.fixedAmount === false
+        ? false
+        : category.name === "Payday loans"
   }));
 }
 
@@ -522,9 +528,31 @@ function getCategoryStatus(spent, budget) {
   return { label: "On track", className: "safe" };
 }
 
+function isFixedAmountCategory(category) {
+  if (category.fixedAmount === true) {
+    return true;
+  }
+
+  if (category.fixedAmount === false) {
+    return false;
+  }
+
+  return category.name === "Payday loans";
+}
+
+function getCategoryEffectiveBudget(category) {
+  const fullBudget = Number(category.budget) || 0;
+
+  if (appData.settings.budgetMode === "biweekly" && !isFixedAmountCategory(category)) {
+    return fullBudget / 2;
+  }
+
+  return fullBudget;
+}
+
 function getTotalAllocated() {
   return appData.categories.reduce(
-    (total, category) => total + Number(category.budget),
+    (total, category) => total + getCategoryEffectiveBudget(category),
     0
   );
 }
@@ -582,13 +610,14 @@ function renderCategories() {
 
   appData.categories.forEach((category) => {
     const spent = getCategorySpent(category.name);
-    const remaining = category.budget - spent;
+    const effectiveBudget = getCategoryEffectiveBudget(category);
+    const remaining = effectiveBudget - spent;
     const percentUsed =
-      category.budget > 0
-        ? Math.min((spent / category.budget) * 100, 100)
+      effectiveBudget > 0
+        ? Math.min((spent / effectiveBudget) * 100, 100)
         : 0;
 
-    const status = getCategoryStatus(spent, category.budget);
+    const status = getCategoryStatus(spent, effectiveBudget);
     const safeName = escapeText(category.name);
 
     const categoryRow = document.createElement("div");
@@ -599,7 +628,7 @@ function renderCategories() {
         <div>
           <div class="row-name">${safeName}</div>
           <div class="row-subtitle">
-            ${formatMoney(spent)} spent of ${formatMoney(category.budget)}
+            ${formatMoney(spent)} spent of ${formatMoney(effectiveBudget)}
           </div>
         </div>
 
@@ -1966,7 +1995,8 @@ function addCategory() {
   appData.categories.push({
     name,
     budget: Number(budget.toFixed(2)),
-    moneyAddedThisMonth: 0
+    moneyAddedThisMonth: 0,
+    fixedAmount: false
   });
 
   saveAppData();
