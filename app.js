@@ -225,12 +225,41 @@ function getNextDueDateOccurrence(dueDay, fromDate) {
   return candidate;
 }
 
+function getMostRecentPayday(referenceDate) {
+  const frequency = Number(appData.settings.payFrequencyDays) || 14;
+  let anchor = new Date(`${appData.settings.payday}T00:00:00`);
+
+  if (isNaN(anchor.getTime())) {
+    anchor = new Date();
+  }
+
+  const ref = referenceDate ? new Date(referenceDate) : new Date();
+  ref.setHours(0, 0, 0, 0);
+  anchor.setHours(0, 0, 0, 0);
+
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const diffDays = Math.round((ref.getTime() - anchor.getTime()) / msPerDay);
+  const cyclesPassed = Math.floor(diffDays / frequency);
+
+  let candidate = new Date(anchor.getTime() + cyclesPassed * frequency * msPerDay);
+
+  while (candidate.getTime() > ref.getTime()) {
+    candidate = new Date(candidate.getTime() - frequency * msPerDay);
+  }
+
+  while (candidate.getTime() + frequency * msPerDay <= ref.getTime()) {
+    candidate = new Date(candidate.getTime() + frequency * msPerDay);
+  }
+
+  return candidate;
+}
+
 function getPayPeriodBounds(referenceDate) {
   const frequency = Number(appData.settings.payFrequencyDays) || 14;
   const msPerDay = 24 * 60 * 60 * 1000;
 
-  const periodEnd = getNextPayday(referenceDate);
-  const periodStart = new Date(periodEnd.getTime() - frequency * msPerDay);
+  const periodStart = getMostRecentPayday(referenceDate);
+  const periodEnd = new Date(periodStart.getTime() + frequency * msPerDay);
 
   return { periodStart, periodEnd };
 }
@@ -353,9 +382,9 @@ function updatePayPeriodInfo() {
     return;
   }
 
-  const nextPayday = getNextPayday(new Date());
+  const { periodEnd } = getPayPeriodBounds(new Date());
 
-  nextPaydayElement.textContent = `Next payday: ${nextPayday.toLocaleDateString("en-US", {
+  nextPaydayElement.textContent = `Next payday: ${periodEnd.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric"
